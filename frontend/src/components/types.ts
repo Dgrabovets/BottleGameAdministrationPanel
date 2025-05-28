@@ -82,25 +82,36 @@ export interface TransactionType {
   moneyTransaction: string;
 }
 
-// Interfaces related to Settings
 export interface GameSettings {
   baseWinChance: number;
   minWinChance: number;
   maxWinChance: number;
+  baseMultiplierProbability: number;
+
   chanceDecPerThrowMin: number;
   chanceDecPerThrowMax: number;
   chanceDecPerRotation: number;
   minRotationWinChance: number;
+
   minMultiplier: number;
   maxMultiplier: number;
+  probabilityFor1_5: number;
+  probabilityFor2: number;
+  probabilityFor3: number;
+  probabilityFor5: number;
+  probabilityFor10: number;
+
   initialBalanceLoss: number;
   deviationChance: number;
   maxDeviationPercent: number;
+
   minGamesForBoost: number;
   winBoostChance: number;
   winBoostMultiplier: number;
+
   hardResetChance: number;
   controlGoal: number;
+
   reelSpeed: number;
   uprightThresholdForLine: number;
 }

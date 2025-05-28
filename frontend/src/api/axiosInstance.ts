@@ -1,7 +1,7 @@
 import axios from "axios";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-console.log(API_BASE_URL, "baseurl");
+
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
@@ -28,7 +28,7 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
-    if (!error.response) {
+    if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
       console.warn("Токен недействителен, удаляем...");

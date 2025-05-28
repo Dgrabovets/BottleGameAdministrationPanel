@@ -22,8 +22,19 @@ export default function SettingsPage() {
   const [balance, setBalance] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [winChance, setWinChance] = useState<number>(0);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
+    const userRaw = localStorage.getItem("user");
+    if (userRaw) {
+      try {
+        const user = JSON.parse(userRaw);
+        setUserRole(user.role);
+      } catch (err) {
+        console.error("Ошибка при разборе user", err);
+      }
+    }
+
     const fetchUsers = async () => {
       try {
         if (idNumber) {
@@ -77,6 +88,8 @@ export default function SettingsPage() {
     return <div></div>;
   }
 
+  const isDisabled = userRole !== "Admin";
+
   return (
     <div className="mx-auto w-full max-w-[1080px]">
       <Breadcrumb pageName={`Пользователь №${id}`} />
@@ -96,6 +109,7 @@ export default function SettingsPage() {
                   handleChange={(e) => setName(e.target.value)}
                   icon={<UserIcon />}
                   iconPosition="left"
+                  disabled={isDisabled}
                   height="sm"
                 />
                 <InputGroup
@@ -106,6 +120,7 @@ export default function SettingsPage() {
                   label="Аватар пользователя"
                   value={avatarUrl}
                   handleChange={(e) => setAvatarUrl(e.target.value)}
+                  disabled={isDisabled}
                   height="sm"
                 />
               </div>
@@ -118,24 +133,20 @@ export default function SettingsPage() {
                   label="Шанс выигрыша"
                   value={winChance}
                   handleChange={(e) => setWinChance(Number(e.target.value))}
+                  disabled={isDisabled}
                   height="sm"
                 />
               </div>
               <div className="flex justify-end gap-3">
-                {/* <button
-                  className="rounded-lg border border-stroke px-6 py-[7px] font-medium text-dark hover:shadow-1 dark:border-dark-3 dark:text-white"
-                  type="button"
-                >
-                  Отменить
-                </button> */}
-
-                <button
-                  className="rounded-lg bg-primary px-6 py-[7px] font-medium text-gray-2 hover:bg-opacity-90"
-                  type="button"
-                  onClick={() => onPlayerUpdate()}
-                >
-                  Сохранить
-                </button>
+                {!isDisabled && (
+                  <button
+                    className="rounded-lg bg-primary px-6 py-[7px] font-medium text-gray-2 hover:bg-opacity-90"
+                    type="button"
+                    onClick={() => onPlayerUpdate()}
+                  >
+                    Сохранить
+                  </button>
+                )}
               </div>
             </form>
           </ShowcaseSection>

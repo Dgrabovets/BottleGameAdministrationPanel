@@ -80,11 +80,8 @@ export function Deposits() {
         </TableHeader>
 
         <TableBody>
-          {formattedData.map((item) => (
-            <TableRow
-              key={item.playerId}
-              className="border-[#eee] dark:border-dark-3"
-            >
+          {formattedData.map((item, index) => (
+            <TableRow key={index} className="border-[#eee] dark:border-dark-3">
               <TableCell className="flex min-w-fit items-center gap-3">
                 <Image
                   src={
@@ -109,7 +106,13 @@ export function Deposits() {
 
               <TableCell>
                 <p className="font-medium text-dark dark:text-white">
-                  {item.createdAt}
+                  {new Date(item.createdAt)
+                    .toLocaleDateString("ru-RU", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
+                    })
+                    .replace(/\./g, "-")}
                 </p>
               </TableCell>
 

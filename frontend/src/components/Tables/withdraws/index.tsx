@@ -9,13 +9,50 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
-import { PreviewIcon, ConfirmIcon, CancelIcon } from "../icons";
+import { ConfirmIcon, CancelIcon } from "../icons";
 import { useEffect, useState } from "react";
 import { transactionsApi } from "@/api/transactionsApi";
 import { PlayerTransactions } from "@/components/types";
 
 export function Withdraws() {
   const [data, setData] = useState<PlayerTransactions[]>([]);
+  const [formattedData, setFormattedData] = useState(() =>
+    data.flatMap((playerData) =>
+      playerData.transactions
+        .filter((transaction) => transaction.typeName === "Вывод")
+        .map((transaction) => ({
+          playerName: playerData.player.name,
+          playerId: playerData.player.id,
+          playerAvatar: playerData.player.avatarUrl,
+          transactionId: transaction.id,
+          amount: transaction.amount,
+          status: transaction.statusName,
+          type: transaction.typeName,
+          createdAt: transaction.createdAt,
+          processedAt: transaction.processedAt,
+        })),
+    ),
+  );
+
+  useEffect(() => {
+    const formatted = data.flatMap((playerData) =>
+      playerData.transactions
+        .filter((transaction) => transaction.typeName === "Вывод")
+        .map((transaction) => ({
+          playerName: playerData.player.name,
+          playerId: playerData.player.id,
+          playerAvatar: playerData.player.avatarUrl,
+          transactionId: transaction.id,
+          amount: transaction.amount,
+          status: transaction.statusName,
+          type: transaction.typeName,
+          createdAt: transaction.createdAt,
+          processedAt: transaction.processedAt,
+        })),
+    );
+
+    setFormattedData(formatted);
+  }, [data]);
 
   useEffect(() => {
     const fetchWithdraws = async () => {
@@ -31,25 +68,39 @@ export function Withdraws() {
     fetchWithdraws();
   }, []);
 
+  const handleStatusUpdate = async (
+    transactionId: number,
+    statusId: number,
+  ) => {
+    try {
+      await transactionsApi.updateTransactionStatus(transactionId, statusId);
+
+      setFormattedData((prev) =>
+        prev.map((transaction) =>
+          transaction.transactionId === transactionId
+            ? {
+                ...transaction,
+                status:
+                  statusId === 2
+                    ? "Одобрено"
+                    : statusId === 3
+                      ? "Отклонено"
+                      : transaction.status,
+                processedAt: new Date().toISOString(),
+              }
+            : transaction,
+        ),
+      );
+
+      console.log(`Статус транзакции ${transactionId} обновлён на ${statusId}`);
+    } catch (error) {
+      console.error("Ошибка при обновлении статуса:", error);
+    }
+  };
+
   if (!data) {
     return <div></div>;
   }
-
-  const formattedData = data.flatMap((playerData) =>
-    playerData.transactions
-      .filter((transaction) => transaction.typeName === "Вывод") // Фильтруем только "Вывод"
-      .map((transaction) => ({
-        playerName: playerData.player.name,
-        playerId: playerData.player.id,
-        playerAvatar: playerData.player.avatarUrl,
-        transactionId: transaction.id,
-        amount: transaction.amount,
-        status: transaction.statusName,
-        type: transaction.typeName,
-        createdAt: transaction.createdAt,
-        processedAt: transaction.processedAt,
-      })),
-  );
 
   const isValidUrl = (url: string) => {
     try {
@@ -81,11 +132,8 @@ export function Withdraws() {
         </TableHeader>
 
         <TableBody>
-          {formattedData.map((item) => (
-            <TableRow
-              key={item.playerId}
-              className="border-[#eee] dark:border-dark-3"
-            >
+          {formattedData.map((item, index) => (
+            <TableRow key={index} className="border-[#eee] dark:border-dark-3">
               <TableCell className="flex min-w-fit items-center gap-3">
                 <Image
                   src={
@@ -126,11 +174,11 @@ export function Withdraws() {
                     "max-w-fit rounded-full px-3.5 py-1 text-sm font-medium",
                     {
                       "bg-[#219653]/[0.08] text-[#219653]":
-                        item.status === "Оплачено",
+                        item.status === "Одобрено",
                       "bg-[#D34053]/[0.08] text-[#D34053]":
                         item.status === "Отклонено",
                       "bg-[#FFA70B]/[0.08] text-[#FFA70B]":
-                        item.status === "Ожидает",
+                        item.status === "Ожидание",
                     },
                   )}
                 >
@@ -141,17 +189,25 @@ export function Withdraws() {
               <TableCell>{item.type}</TableCell>
 
               <TableCell className="xl:pr-7.5">
-                <div className="flex items-center justify-end gap-x-3.5">
-                  <button className="hover:text-[#D34053]">
-                    <span className="sr-only">Отклонить</span>
-                    <CancelIcon />
-                  </button>
+                {item.status == "Ожидание" && (
+                  <div className="flex items-center justify-end gap-x-3.5">
+                    <button
+                      className="group rounded-md p-1.5 transition-colors duration-150 hover:bg-[#fcebed]"
+                      onClick={() => handleStatusUpdate(item.transactionId, 3)}
+                    >
+                      <span className="sr-only">Отклонить</span>
+                      <CancelIcon className="group-hover:text-[#D34053]" />
+                    </button>
 
-                  <button className="hover:text-[#219653]">
-                    <span className="sr-only">Подтвердить</span>
-                    <ConfirmIcon />
-                  </button>
-                </div>
+                    <button
+                      className="group rounded-md p-1.5 transition-colors duration-150 hover:bg-[#e7f6ee]"
+                      onClick={() => handleStatusUpdate(item.transactionId, 2)}
+                    >
+                      <span className="sr-only">Подтвердить</span>
+                      <ConfirmIcon className="group-hover:text-[#219653]" />
+                    </button>
+                  </div>
+                )}
               </TableCell>
             </TableRow>
           ))}

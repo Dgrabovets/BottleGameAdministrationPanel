@@ -4,9 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { SyntheticEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { jwtDecode } from "jwt-decode";
 
 import { EmailIcon, PasswordIcon } from "@/assets/icons";
 import InputGroup from "@/components/FormElements/InputGroup";
+
+interface DecodedToken {
+  [key: string]: any;
+}
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
@@ -19,28 +24,44 @@ export default function SignIn() {
   const submitAuth = async (e: SyntheticEvent) => {
     e.preventDefault();
 
-    if (email == "admin@gmail.com" && password == "admin") {
-      const response = await fetch(`${apiUrl}/auth/admin-login`, {
-        method: "POST",
-        body: JSON.stringify({ login: email, password: password }),
-        headers: { "Content-Type": "application/json" },
-      });
+    const response = await fetch(`${apiUrl}/auth/admin-login`, {
+      method: "POST",
+      body: JSON.stringify({ login: email, password: password }),
+      headers: { "Content-Type": "application/json" },
+    });
 
-      if (response.status != 200) {
-        return null;
-      }
-      const data = await response.json();
-
-      localStorage.setItem("token", data?.token);
-
-      router.push("/");
-
-      setTimeout(() => {
-        window.location.reload();
-      }, 500);
-    } else {
+    if (response.status != 200) {
       setError("Не валидные данные");
+      return null;
     }
+    const data = await response.json();
+    const token = data?.token;
+
+    if (!token) {
+      setError("Токен не получен");
+      return;
+    }
+
+    localStorage.setItem("token", data?.token);
+    const decoded: DecodedToken = jwtDecode(token);
+
+    const userId =
+      decoded[
+        "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+      ];
+    const userEmail =
+      decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"];
+    // const role = "Dolboeb";
+    const role =
+      decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
+
+    localStorage.setItem("user", JSON.stringify({ userId, userEmail, role }));
+
+    router.push("/");
+
+    setTimeout(() => {
+      window.location.reload();
+    }, 500);
   };
 
   return (

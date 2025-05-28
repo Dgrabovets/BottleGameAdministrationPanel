@@ -10,10 +10,22 @@ export const settingsApi = {
   },
   editSettings: async (data: GameSettings): Promise<GameSettings> => {
     console.log(data, "settingssavedata");
-    const response = await apiClient.post<GameSettings>( // используем PUT для обновления данных
-      "/GameParams/update-game-params", // предполагаем, что эндпоинт для обновления данных
+    const response = await apiClient.post<GameSettings>(
+      "/GameParams/update-game-params",
       data,
     );
     return response.data;
+  },
+  updateThreshold: async (lowerThreshold: number) => {
+    try {
+      const response = await apiClient.post("/admin/update-threshold", {
+        LowerThreshold: lowerThreshold,
+      });
+      console.log("DEBUG THRESHOLD RESPONSE:", response.data);
+      return response.data;
+    } catch (error) {
+      console.error("Ошибка при обновлении порога:", error);
+      throw error;
+    }
   },
 };

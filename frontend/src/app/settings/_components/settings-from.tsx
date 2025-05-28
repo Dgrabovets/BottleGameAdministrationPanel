@@ -18,6 +18,7 @@ export function SettingsForm() {
       return acc;
     }, {}),
   );
+  const [lowerThreshold, setLowerThreshold] = useState("");
   const [isLoading, setIsLoading] = useState(true);
 
   const handleChange = (e: React.ChangeEvent<any>) => {
@@ -31,7 +32,7 @@ export function SettingsForm() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const data: GameSettings = await settingsApi.getSettingsList(); // Получаем данные из нового API
+        const data: GameSettings = await settingsApi.getSettingsList();
 
         setFormData((prevData) =>
           Object.fromEntries(
@@ -55,30 +56,16 @@ export function SettingsForm() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    const dataToSend = {
-      id: 1,
-      ...Object.fromEntries(
-        Object.entries(formData).map(([key, value]) => [
-          key,
-          isNaN(Number(value)) ? value : Number(value),
-        ]),
-      ),
-    };
+    const payload: GameSettings = Object.fromEntries(
+      Object.entries(formData).map(([key, value]) => [key, parseFloat(value)]),
+    ) as unknown as GameSettings;
 
     try {
-      // Отправляем данные через API
-      await settingsApi.editSettings(dataToSend as unknown as GameSettings);
-
-      // setTimeout(() => {
-      //   window.location.reload();
-      // }, 500); // Ожидаем 500 миллисекунд перед перезагрузкой страницы
+      await settingsApi.editSettings(payload);
+      toast.success("Настройки обновлены");
     } catch (err) {
-      console.error(err);
-      toast.error("Ошибка при сохранении данных.");
+      toast.error("Ошибка при обновлении");
     }
-
-    toast.success("Данные успешно отправлены");
   };
 
   if (isLoading) {
@@ -86,47 +73,89 @@ export function SettingsForm() {
   }
 
   return (
-    <ShowcaseSection title="Настройки">
-      <form onSubmit={handleSubmit}>
-        {inputFields.map((section, index) => (
-          <div key={section.title} className="flex-column">
-            <div className="mb-2.5 mt-2.5">
-              <p>{section.title}</p>
+    <div>
+      <ShowcaseSection title="Настройки">
+        <form onSubmit={handleSubmit}>
+          {inputFields.map((section, index) => (
+            <div key={section.title} className="flex-column">
+              <div className="mb-2.5 mt-2.5">
+                <p>{section.title}</p>
+              </div>
+              <div className="mb-5.5 flex flex-row gap-3.5 sm:flex-row">
+                {section.fields.map(({ name, label, placeholder }) => (
+                  <InputGroup
+                    key={name}
+                    className="w-full sm:w-1/2"
+                    type="number"
+                    name={name}
+                    label={label}
+                    placeholder={placeholder}
+                    value={formData[name] || ""}
+                    handleChange={handleChange} // Добавлен onChange
+                    height="sm"
+                  />
+                ))}
+              </div>
+              {index !== inputFields.length - 1 && <hr />}
             </div>
-            <div className="mb-5.5 flex flex-row gap-3.5 sm:flex-row">
-              {section.fields.map(({ name, label, placeholder }) => (
+          ))}
+          <div className="mt-4 flex justify-end gap-3">
+            <button
+              className="rounded-lg border border-stroke px-6 py-[7px] font-medium text-dark hover:shadow-1 dark:border-dark-3 dark:text-white"
+              type="button"
+            >
+              Отменить
+            </button>
+
+            <button
+              className="rounded-lg bg-primary px-6 py-[7px] font-medium text-gray-2 hover:bg-opacity-90"
+              type="submit"
+            >
+              Сохранить
+            </button>
+          </div>
+        </form>
+      </ShowcaseSection>
+
+      <div style={{ marginTop: "50px" }}>
+        <ShowcaseSection title="Баланс приложения">
+          <form action="">
+            <div key="Порог" className="flex-column">
+              <div className="mb-2.5 mt-2.5">
+                <p>Тайтл</p>
+              </div>
+              <div className="mb-5.5 flex flex-row gap-3.5 sm:flex-row">
                 <InputGroup
-                  key={name}
+                  key="Порог"
                   className="w-full sm:w-1/2"
                   type="number"
-                  name={name}
-                  label={label}
-                  placeholder={placeholder}
-                  value={formData[name] || ""}
-                  handleChange={handleChange} // Добавлен onChange
+                  name="Нижний порог баланса"
+                  label="Нижний порог баланса"
+                  placeholder="Нижний порог баланса"
+                  value={lowerThreshold}
+                  handleChange={(e) => setLowerThreshold(e.target.value)}
                   height="sm"
                 />
-              ))}
+              </div>
             </div>
-            {index !== inputFields.length - 1 && <hr />}
-          </div>
-        ))}
-        <div className="mt-4 flex justify-end gap-3">
-          <button
-            className="rounded-lg border border-stroke px-6 py-[7px] font-medium text-dark hover:shadow-1 dark:border-dark-3 dark:text-white"
-            type="button"
-          >
-            Отменить
-          </button>
+            <div className="mt-4 flex justify-end gap-3">
+              <button
+                className="rounded-lg border border-stroke px-6 py-[7px] font-medium text-dark hover:shadow-1 dark:border-dark-3 dark:text-white"
+                type="button"
+              >
+                Отменить
+              </button>
 
-          <button
-            className="rounded-lg bg-primary px-6 py-[7px] font-medium text-gray-2 hover:bg-opacity-90"
-            type="submit"
-          >
-            Сохранить
-          </button>
-        </div>
-      </form>
-    </ShowcaseSection>
+              <button
+                className="rounded-lg bg-primary px-6 py-[7px] font-medium text-gray-2 hover:bg-opacity-90"
+                type="submit"
+              >
+                Сохранить
+              </button>
+            </div>
+          </form>
+        </ShowcaseSection>
+      </div>
+    </div>
   );
 }

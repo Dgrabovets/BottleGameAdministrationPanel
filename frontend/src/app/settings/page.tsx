@@ -2,6 +2,7 @@
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import { SettingsForm } from "./_components/settings-from";
 import { useEffect, useState } from "react";
+import PrivateRoute from "@/components/PrivateRoute/PrivateRoute";
 
 export default function SettingsPage() {
   const [authToken, setAuthToken] = useState<string | null>(null);
@@ -18,14 +19,16 @@ export default function SettingsPage() {
     return <div>No Auth</div>;
   }
   return (
-    <div className="mx-auto w-full max-w-[1080px]">
-      <Breadcrumb pageName="Настройки" />
+    <PrivateRoute>
+      <div className="mx-auto w-full max-w-[1080px]">
+        <Breadcrumb pageName="Настройки" />
 
-      <div className="gap-8">
-        <div>
-          <SettingsForm />
+        <div className="gap-8">
+          <div>
+            <SettingsForm />
+          </div>
         </div>
       </div>
-    </div>
+    </PrivateRoute>
   );
 }

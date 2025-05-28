@@ -13,27 +13,22 @@ export default function Page() {
     coverPhoto: "/images/cover/cover-01.png",
   });
 
-  const handleChange = (e: any) => {
-    if (e.target.name === "profilePhoto") {
-      const file = e.target?.files[0];
-
-      setData({
-        ...data,
-        profilePhoto: file && URL.createObjectURL(file),
-      });
-    } else if (e.target.name === "coverPhoto") {
-      const file = e.target?.files[0];
-
-      setData({
-        ...data,
-        coverPhoto: file && URL.createObjectURL(file),
-      });
-    } else {
-      setData({
-        ...data,
-        [e.target.name]: e.target.value,
-      });
+  const getUserFromStorage = () => {
+    try {
+      const userRaw = localStorage.getItem("user");
+      if (!userRaw) return null;
+      return JSON.parse(userRaw);
+    } catch {
+      return null;
     }
+  };
+
+  const storedUser = getUserFromStorage();
+
+  const USER = {
+    name: storedUser?.role || "Unknown Role",
+    email: storedUser?.userEmail || "test@gmail.com",
+    img: "/images/user/download.png",
   };
 
   return (
@@ -53,61 +48,26 @@ export default function Page() {
               height: "auto",
             }}
           />
-          <div className="absolute bottom-1 right-1 z-10 xsm:bottom-4 xsm:right-4">
-            <label
-              htmlFor="cover"
-              className="flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary px-[15px] py-[5px] text-body-sm font-medium text-white hover:bg-opacity-90"
-            >
-              <input
-                type="file"
-                name="coverPhoto"
-                id="coverPhoto"
-                className="sr-only"
-                onChange={handleChange}
-                accept="image/png, image/jpg, image/jpeg"
-              />
-
-              <CameraIcon />
-
-              <span>Изменить</span>
-            </label>
-          </div>
         </div>
         <div className="px-4 pb-6 text-center lg:pb-8 xl:pb-11.5">
           <div className="relative z-30 mx-auto -mt-22 h-30 w-full max-w-30 rounded-full bg-white/20 p-1 backdrop-blur sm:h-44 sm:max-w-[176px] sm:p-3">
             <div className="relative drop-shadow-2">
-              {data?.profilePhoto && (
+              {USER?.img && (
                 <>
                   <Image
-                    src={data?.profilePhoto}
+                    src={USER.img}
                     width={160}
                     height={160}
                     className="overflow-hidden rounded-full"
                     alt="profile"
                   />
-
-                  <label
-                    htmlFor="profilePhoto"
-                    className="absolute bottom-0 right-0 flex size-8.5 cursor-pointer items-center justify-center rounded-full bg-primary text-white hover:bg-opacity-90 sm:bottom-2 sm:right-2"
-                  >
-                    <CameraIcon />
-
-                    <input
-                      type="file"
-                      name="profilePhoto"
-                      id="profilePhoto"
-                      className="sr-only"
-                      onChange={handleChange}
-                      accept="image/png, image/jpg, image/jpeg"
-                    />
-                  </label>
                 </>
               )}
             </div>
           </div>
           <div className="mt-4">
             <h3 className="mb-1 text-heading-6 font-bold text-dark dark:text-white">
-              {data?.name}
+              {USER?.name}
             </h3>
           </div>
         </div>
