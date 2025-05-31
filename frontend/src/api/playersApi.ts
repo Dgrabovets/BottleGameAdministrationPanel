@@ -40,4 +40,22 @@ export const playersApi = {
 
     return response.data;
   },
+  registerModerator: async (login: string, password: string) => {
+    const response = await apiClient.post("/Admin/moderator-register", {
+      login,
+      password,
+    });
+
+    return response.data;
+  },
+  getModerators: async () => {
+    const response = await apiClient.get("/Admin/get-moderators");
+    return response.data;
+  },
+  deleteModerator: async (moderatorId: number) => {
+    const response = await apiClient.delete(
+      `/Admin/delete-moderator/${moderatorId}`,
+    );
+    return response.data;
+  },
 };

@@ -4,6 +4,7 @@ import { getOverviewData } from "../../fetch";
 import { OverviewCard } from "./card";
 import * as icons from "./icons";
 import { useEffect, useState } from "react";
+import { settingsApi } from "@/api/settingsApi";
 
 type OverviewData = {
   views: { value: number; growthRate: number };
@@ -20,7 +21,27 @@ export function OverviewCardsGroup() {
   useEffect(() => {
     async function fetchData() {
       try {
-        const result = await getOverviewData();
+        const stats = await settingsApi.getStatistics(); // ← правильный вызов
+
+        const result = {
+          views: {
+            value: stats.balancesTotal,
+            growthRate: 0, // можешь заменить на актуальное значение, если появится
+          },
+          profit: {
+            value: stats.depositsTotal,
+            growthRate: 0,
+          },
+          products: {
+            value: stats.pendingWithdrawalsTotal,
+            growthRate: 0,
+          },
+          users: {
+            value: stats.usersTotal,
+            growthRate: 0,
+          },
+        };
+
         setData(result);
       } catch (error) {
         console.error("Ошибка загрузки данных:", error);

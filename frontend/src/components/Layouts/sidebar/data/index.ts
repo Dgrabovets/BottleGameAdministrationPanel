@@ -58,6 +58,12 @@ export const NAV_DATA: SectionType[] = [
         items: [],
       },
       {
+        title: "Модераторы",
+        icon: Icons.User,
+        url: "/moderators",
+        items: [],
+      },
+      {
         title: "Выйти",
         icon: Icons.Authentication,
         url: "/logout",

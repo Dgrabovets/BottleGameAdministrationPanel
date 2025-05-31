@@ -9,7 +9,6 @@ export const settingsApi = {
     return response.data;
   },
   editSettings: async (data: GameSettings): Promise<GameSettings> => {
-    console.log(data, "settingssavedata");
     const response = await apiClient.post<GameSettings>(
       "/GameParams/update-game-params",
       data,
@@ -27,5 +26,13 @@ export const settingsApi = {
       console.error("Ошибка при обновлении порога:", error);
       throw error;
     }
+  },
+  getStatistics: async () => {
+    const response = await apiClient.get("/Admin/get-statistics");
+    return response.data;
+  },
+  getAppBalance: async () => {
+    const response = await apiClient.get("/Admin/get-app-balance");
+    return response.data;
   },
 };
