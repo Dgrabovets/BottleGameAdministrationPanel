@@ -84,6 +84,21 @@ export default function SettingsPage() {
     }
   };
 
+  const onBalanceUpdate = async () => {
+    try {
+      if (idNumber) {
+        const balanceNum = parseFloat(balance.replace(",", "."));
+        if (Number.isNaN(balanceNum)) return;
+        await playersApi.editPlayerBalance(idNumber, balanceNum);
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
   if (!data) {
     return <div></div>;
   }
@@ -149,6 +164,34 @@ export default function SettingsPage() {
                 )}
               </div>
             </form>
+          </ShowcaseSection>
+        </div>
+        <div className="col-span-5 xl:col-span-2">
+          <ShowcaseSection title="Баланс" className="!p-7">
+            <div className="mb-5.5">
+              <InputGroup
+                className="w-full"
+                type="number"
+                name="balance"
+                label="Текущий баланс"
+                placeholder="0.00"
+                value={balance}
+                handleChange={(e) => setBalance(e.target.value)}
+                disabled={isDisabled}
+                height="sm"
+              />
+            </div>
+            {!isDisabled && (
+              <div className="flex justify-end">
+                <button
+                  className="rounded-lg bg-primary px-6 py-[7px] font-medium text-gray-2 hover:bg-opacity-90"
+                  type="button"
+                  onClick={onBalanceUpdate}
+                >
+                  Сохранить баланс
+                </button>
+              </div>
+            )}
           </ShowcaseSection>
         </div>
       </div>

@@ -40,6 +40,18 @@ export const playersApi = {
 
     return response.data;
   },
+
+  /**
+   * Обновление баланса игрока (только для админа).
+   * Отправляет только поле balance, остальные поля null.
+   */
+  editPlayerBalance: async (playerId: number, balance: number) => {
+    const response = await apiClient.post(
+      `/Player/edit-player/${playerId}`,
+      { balance },
+    );
+    return response.data;
+  },
   registerModerator: async (login: string, password: string) => {
     const response = await apiClient.post("/Admin/moderator-register", {
       login,
