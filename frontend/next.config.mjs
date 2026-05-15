@@ -30,7 +30,7 @@ const nextConfig = {
     return [
       {
         source: "/api/:path*", // Локальный путь
-        destination: "https://api.adminbottle.ru/:path*", // Проксируемый сервер
+        destination: "https://127.0.0.1:6001/:path*",
       },
     ];
   },

@@ -1,6 +1,10 @@
 import * as logos from "@/assets/logos";
 import { toast } from "react-toastify";
 
+const API_ORIGIN =
+  process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, "") ||
+  "https://admin.bottledevadmin.ru";
+
 interface GameParams {
   baseWinChance: number; // число с плавающей точкой
   minWinChance: number; // целое число
@@ -33,7 +37,7 @@ export async function updatePlayer(
   avatar: string,
 ) {
   try {
-    const response = await fetch("https://api.adminbottle.ru/users/update", {
+    const response = await fetch(`${API_ORIGIN}/users/update`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -62,7 +66,7 @@ export async function updatePlayer(
 // export async function getPlayerById(playerId: number) {
 //   try {
 //     const response = await fetch(
-//       `https://api.adminbottle.ru/session/list/${playerId}`,
+//       `${API_ORIGIN}/session/list/${playerId}`,
 //     );
 
 //     if (!response.ok) {
@@ -80,7 +84,7 @@ export async function updatePlayer(
 
 export async function getGameParams() {
   try {
-    const response = await fetch("https://api.adminbottle.ru/gameparams");
+    const response = await fetch(`${API_ORIGIN}/gameparams`);
 
     if (!response.ok) {
       throw new Error(
@@ -97,7 +101,7 @@ export async function getGameParams() {
 
 export async function updateGameParams(gameParams: GameParams) {
   try {
-    const response = await fetch("https://api.adminbottle.ru/gameparams", {
+    const response = await fetch(`${API_ORIGIN}/gameparams`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
@@ -123,7 +127,7 @@ export async function updateGameParams(gameParams: GameParams) {
 //   try {
 //     // Запрос к API для получения данных о раундах пользователя
 //     const response = await fetch(
-//       `https://api.adminbottle.ru/round/list/${playerId}`,
+//       `${API_ORIGIN}/round/list/${playerId}`,
 //     );
 
 //     // Проверяем успешность ответа
