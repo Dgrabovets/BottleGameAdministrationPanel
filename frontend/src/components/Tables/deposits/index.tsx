@@ -7,7 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import Image from "next/image";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { useEffect, useState } from "react";
 import { transactionsApi } from "@/api/transactionsApi";
 import { cn } from "@/lib/utils";
@@ -29,15 +29,6 @@ export function Deposits() {
 
     fetchWithdraws();
   }, []);
-
-  const isValidUrl = (url: string) => {
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
-  };
 
   if (!data) {
     return <div></div>;
@@ -83,17 +74,12 @@ export function Deposits() {
           {formattedData.map((item, index) => (
             <TableRow key={index} className="border-[#eee] dark:border-dark-3">
               <TableCell className="flex min-w-fit items-center gap-3">
-                <Image
-                  src={
-                    isValidUrl(item?.playerAvatar)
-                      ? item?.playerAvatar
-                      : "/images/user/download.png"
-                  }
-                  className="w-15 rounded-full object-cover"
+                <PlayerAvatar
+                  src={item.playerAvatar}
+                  className="w-15"
                   width={50}
                   height={50}
                   alt={"Player Avatar" + item.playerName}
-                  role="presentation"
                 />
                 <h5 className="font-medium text-dark dark:text-white">
                   {item.playerName}
@@ -101,7 +87,7 @@ export function Deposits() {
               </TableCell>
 
               <TableCell className="min-w-[155px] font-medium xl:pl-7.5">
-                <h5 className="text-dark dark:text-white">${item.amount}</h5>
+                <h5 className="text-dark dark:text-white">{item.amount} ₽</h5>
               </TableCell>
 
               <TableCell>

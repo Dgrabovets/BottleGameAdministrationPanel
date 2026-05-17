@@ -10,22 +10,13 @@ import { cn } from "@/lib/utils";
 import { PlayerData } from "@/components/types";
 import { useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
 
 interface PlayerReferralProps {
   data: PlayerData;
 }
 
 export function PlayerRefferalTable({ data }: PlayerReferralProps) {
-  const isValidUrl = (url: string) => {
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
   return (
     <div className="rounded-[10px] border border-stroke bg-white shadow-1 dark:border-dark-3 dark:bg-gray-dark dark:shadow-card">
       <div className="px-6 py-4 sm:px-7 sm:py-5 xl:px-8.5">
@@ -58,17 +49,12 @@ export function PlayerRefferalTable({ data }: PlayerReferralProps) {
                   passHref
                   className="flex min-w-fit items-center gap-3"
                 >
-                  <Image
-                    src={
-                      isValidUrl(item?.avatarUrl)
-                        ? data.player.avatarUrl
-                        : "/images/user/download.png"
-                    }
-                    className="w-15 rounded-full object-cover"
+                  <PlayerAvatar
+                    src={item.avatarUrl}
+                    className="w-15"
                     width={50}
                     height={50}
                     alt={"Player Avatar" + item.name}
-                    role="presentation"
                   />
                   <div>{item.name}</div>
                 </Link>

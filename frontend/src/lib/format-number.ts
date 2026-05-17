@@ -13,3 +13,8 @@ export function standardFormat(value: number) {
     maximumFractionDigits: 2,
   });
 }
+
+export function formatRub(value: number, compact = false) {
+  const formatted = compact ? compactFormat(value) : standardFormat(value);
+  return `${formatted} ₽`;
+}

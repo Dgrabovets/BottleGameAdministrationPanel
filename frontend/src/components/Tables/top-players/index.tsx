@@ -7,7 +7,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import Image from "next/image";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { playersApi } from "@/api/playersApi";
@@ -28,15 +28,6 @@ export function TopPlayers() {
 
     fetchTopPlayers();
   }, []);
-
-  const isValidUrl = (url: string) => {
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
-  };
 
   if (!data) {
     return <div></div>;
@@ -80,17 +71,12 @@ export function TopPlayers() {
                   passHref
                   className="flex min-w-fit items-center gap-3"
                 >
-                  <Image
-                    src={
-                      isValidUrl(player.player.avatarUrl)
-                        ? player.player.avatarUrl
-                        : "/images/user/download.png"
-                    }
-                    className="w-15 rounded-full object-cover"
+                  <PlayerAvatar
+                    src={player.player.avatarUrl}
+                    className="w-15"
                     width={50}
                     height={50}
                     alt={"Player Avatar" + player.player.name}
-                    role="presentation"
                   />
                   <div>{player.player.name}</div>
                 </Link>
@@ -98,7 +84,7 @@ export function TopPlayers() {
 
               {/* <TableCell>{player.email}</TableCell> */}
 
-              <TableCell>${player.balance}</TableCell>
+              <TableCell>{player.balance} ₽</TableCell>
 
               <TableCell>{player.player.winRate}</TableCell>
 

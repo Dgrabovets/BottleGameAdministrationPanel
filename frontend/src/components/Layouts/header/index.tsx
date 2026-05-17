@@ -23,15 +23,16 @@ export function Header() {
           href={"/"}
           className="ml-1 mr-2 max-[430px]:hidden min-[375px]:ml-4"
         >
-          <h1>GLG STUDIO</h1>
+          <span className="text-heading-6 font-bold text-dark dark:text-white">
+            Панель администратора
+          </span>
         </Link>
       )}
 
       <div className="max-xl:hidden">
-        <h1 className="mb-0.5 text-heading-5 font-bold text-dark dark:text-white">
+        <h1 className="text-heading-5 font-bold text-dark dark:text-white">
           Панель администратора
         </h1>
-        <p className="font-medium">GLG Studio</p>
       </div>
 
       <div className="flex flex-1 items-center justify-end gap-2 min-[375px]:gap-4">

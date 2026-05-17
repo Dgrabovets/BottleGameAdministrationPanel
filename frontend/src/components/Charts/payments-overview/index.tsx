@@ -1,5 +1,5 @@
 import { PeriodPicker } from "@/components/period-picker";
-import { standardFormat } from "@/lib/format-number";
+import { formatRub } from "@/lib/format-number";
 import { cn } from "@/lib/utils";
 import { getPaymentsOverviewData } from "@/services/charts.services";
 import { PaymentsOverviewChart } from "./chart";
@@ -35,14 +35,14 @@ export async function PaymentsOverview({
       <dl className="grid divide-stroke text-center dark:divide-dark-3 sm:grid-cols-2 sm:divide-x [&>div]:flex [&>div]:flex-col-reverse [&>div]:gap-1">
         <div className="dark:border-dark-3 max-sm:mb-3 max-sm:border-b max-sm:pb-3">
           <dt className="text-xl font-bold text-dark dark:text-white">
-            ${standardFormat(data.received.reduce((acc, { y }) => acc + y, 0))}
+            {formatRub(data.received.reduce((acc, { y }) => acc + y, 0))}
           </dt>
           <dd className="font-medium dark:text-dark-6">Сумма к оплате</dd>
         </div>
 
         <div>
           <dt className="text-xl font-bold text-dark dark:text-white">
-            ${standardFormat(data.due.reduce((acc, { y }) => acc + y, 0))}
+            {formatRub(data.due.reduce((acc, { y }) => acc + y, 0))}
           </dt>
           <dd className="font-medium dark:text-dark-6">Полученная сумма</dd>
         </div>

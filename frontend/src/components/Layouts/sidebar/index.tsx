@@ -64,7 +64,9 @@ export function Sidebar() {
               onClick={() => isMobile && toggleSidebar()}
               className="px-0 py-2.5 min-[850px]:py-0"
             >
-              <h1>GLG Studio</h1>
+              <h1 className="text-heading-6 font-bold text-dark dark:text-white">
+                Панель администратора
+              </h1>
             </Link>
 
             {isMobile && (
