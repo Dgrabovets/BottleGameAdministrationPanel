@@ -1,127 +1,5 @@
 import * as logos from "@/assets/logos";
-import { toast } from "react-toastify";
-
-const API_ORIGIN =
-  process.env.NEXT_PUBLIC_API_URL?.replace(/\/api\/?$/, "") ||
-  "https://admin.bottledevadmin.ru";
-
-interface GameParams {
-  baseWinChance: number; // число с плавающей точкой
-  minWinChance: number; // целое число
-  maxWinChance: number; // целое число
-  chanceDecPerThrowMin: number; // целое число
-  chanceDecPerThrowMax: number; // целое число
-  chanceDecPerRotation: number; // целое число
-  minRotationWinChance: number; // целое число
-  minMultiplier: number; // число с плавающей точкой
-  maxMultiplier: number; // число с плавающей точкой
-  initialBalanceLoss: number; // число с плавающей точкой
-  deviationChance: number; // число с плавающей точкой
-  maxDeviationPercent: number; // число с плавающей точкой
-  minGamesForBoost: number; // целое число
-  winBoostChance: number; // число с плавающей точкой
-  winBoostMultiplier: number; // число с плавающей точкой
-  hardResetChance: number; // число с плавающей точкой
-  controlGoal: number; // число с плавающей точкой
-  reelAdvanceSpeed: number; // число с плавающей точкой
-  uprightThresholdForLine: number; // число с плавающей точкой
-
-  [key: string]: number | undefined;
-}
-
-
-export async function updatePlayer(
-  playerId: number,
-  name: string,
-  balance: number,
-  avatar: string,
-) {
-  try {
-    const response = await fetch(`${API_ORIGIN}/users/update`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        playerId,
-        name,
-        balance,
-        avatar,
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(
-        `Ошибка сервера: ${response.status} ${response.statusText}`,
-      );
-    }
-    toast.success("Пользователь успешно обновлен! ✅");
-    return await response.json();
-  } catch (error) {
-    toast.error("Ошибка обновления пользователя ❌");
-    return null;
-  }
-}
-
-// export async function getPlayerById(playerId: number) {
-//   try {
-//     const response = await fetch(
-//       `${API_ORIGIN}/session/list/${playerId}`,
-//     );
-
-//     if (!response.ok) {
-//       throw new Error(
-//         `Ошибка сервера: ${response.status} ${response.statusText}`,
-//       );
-//     }
-
-//     return await response.json(); // Возвращаем данные пользователя
-//   } catch (error) {
-//     console.error("Ошибка при получении данных пользователя");
-//     return null; // Если ошибка, возвращаем `null`
-//   }
-// }
-
-export async function getGameParams() {
-  try {
-    const response = await fetch(`${API_ORIGIN}/gameparams`);
-
-    if (!response.ok) {
-      throw new Error(
-        `Ошибка сервера: ${response.status} ${response.statusText}`,
-      );
-    }
-
-    return await response.json(); // Возвращаем данные игры
-  } catch (error) {
-    console.error("Ошибка при получении данных");
-    return null; // Если ошибка, возвращаем `null`
-  }
-}
-
-export async function updateGameParams(gameParams: GameParams) {
-  try {
-    const response = await fetch(`${API_ORIGIN}/gameparams`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(gameParams),
-    });
-
-    if (!response.ok) {
-      throw new Error(
-        `Ошибка при отправке: ${response.status} ${response.statusText}`,
-      );
-    }
-
-    toast.success("Данные успешно обновлены! ✅");
-    return { message: "Данные успешно отправлены" };
-  } catch (error) {
-    console.error("Ошибка при отправке данных");
-    return { error: "Ошибка при отправке данных" };
-  }
-}
+import { PLAYER_AVATAR_PLACEHOLDER } from "@/lib/player-avatar";
 
 // export async function getPlayerRounds(playerId: number) {
 //   try {
@@ -159,14 +37,14 @@ export async function getWithdraws() {
     {
       id: 3,
       username: "User 1",
-      avatar: "/images/user/download.png",
+      avatar: PLAYER_AVATAR_PLACEHOLDER,
       amount: 135,
       date: "11.03.2025",
       status: "Ожидает",
     },
     {
       id: 4,
-      avatar: "/images/user/download.png",
+      avatar: PLAYER_AVATAR_PLACEHOLDER,
       username: "User 1",
       amount: 150,
       date: "12.03.2025",
@@ -174,7 +52,7 @@ export async function getWithdraws() {
     },
     {
       id: 5,
-      avatar: "/images/user/download.png",
+      avatar: PLAYER_AVATAR_PLACEHOLDER,
       username: "User 2",
       amount: 490,
       date: "13.03.2025",
@@ -188,20 +66,20 @@ export async function getDeposits() {
     {
       id: 3,
       username: "User 1",
-      avatar: "/images/user/download.png",
+      avatar: PLAYER_AVATAR_PLACEHOLDER,
       amount: 135,
       date: "11.03.2025",
     },
     {
       id: 4,
-      avatar: "/images/user/download.png",
+      avatar: PLAYER_AVATAR_PLACEHOLDER,
       username: "User 1",
       amount: 150,
       date: "12.03.2025",
     },
     {
       id: 5,
-      avatar: "/images/user/download.png",
+      avatar: PLAYER_AVATAR_PLACEHOLDER,
       username: "User 2",
       amount: 490,
       date: "13.03.2025",
@@ -214,7 +92,7 @@ export async function getTopPlayers() {
     {
       id: 1,
       top_number: 1,
-      avatar: "/images/user/download.png",
+      avatar: PLAYER_AVATAR_PLACEHOLDER,
       username: "User 1",
       email: "test@gmail.com",
       balance: 2946,
@@ -224,7 +102,7 @@ export async function getTopPlayers() {
     {
       id: 2,
       top_number: 2,
-      avatar: "/images/user/download.png",
+      avatar: PLAYER_AVATAR_PLACEHOLDER,
       username: "User 2",
       email: "test@gmail.com",
       balance: 5446,
@@ -234,7 +112,7 @@ export async function getTopPlayers() {
     {
       id: 3,
       top_number: 3,
-      avatar: "/images/user/download.png",
+      avatar: PLAYER_AVATAR_PLACEHOLDER,
       username: "User 3",
       email: "test@gmail.com",
       balance: 4413,
@@ -244,7 +122,7 @@ export async function getTopPlayers() {
     {
       id: 4,
       top_number: 4,
-      avatar: "/images/user/download.png",
+      avatar: PLAYER_AVATAR_PLACEHOLDER,
       username: "User 4",
       email: "test@gmail.com",
       balance: 4929,

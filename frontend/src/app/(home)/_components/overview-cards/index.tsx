@@ -1,6 +1,5 @@
 "use client";
 import { compactFormat, formatRub } from "@/lib/format-number";
-import { getOverviewData } from "../../fetch";
 import { OverviewCard } from "./card";
 import * as icons from "./icons";
 import { useEffect, useState } from "react";

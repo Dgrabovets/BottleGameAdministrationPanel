@@ -9,26 +9,15 @@ import "jsvectormap/dist/jsvectormap.css";
 
 import { Header } from "@/components/Layouts/header";
 import NextTopLoader from "nextjs-toploader";
-import { useEffect, useState, type PropsWithChildren } from "react";
+import type { PropsWithChildren } from "react";
 import { Providers } from "./providers";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 
 export default function RootLayout({ children }: PropsWithChildren) {
-  const router = useRouter();
-  const [authToken, setAuthToken] = useState<string | null>(null);
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    setAuthToken(token); // Обновляем состояние после монтирования
-
-    if (!token) {
-      router.push("/login"); // Перенаправляем пользователя после рендера
-    }
-  }, [router]);
-
-  // Пока `authToken` не определён, возвращаем `null`, чтобы избежать рендера
+  const pathname = usePathname();
+  const isAuthPage = pathname === "/login" || pathname === "/logout";
 
   return (
     <html lang="ru" suppressHydrationWarning>
@@ -36,8 +25,7 @@ export default function RootLayout({ children }: PropsWithChildren) {
         <Providers>
           <NextTopLoader showSpinner={false} />
 
-          {/* Если токена нет — отображаем только children */}
-          {!authToken ? (
+          {isAuthPage ? (
             <main className="isolate mx-auto w-full max-w-screen-2xl overflow-hidden p-4 md:p-6 2xl:p-10">
               {children}
             </main>

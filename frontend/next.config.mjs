@@ -4,18 +4,6 @@ const nextConfig = {
     remotePatterns: [
       {
         protocol: "https",
-        hostname: "cdn.sanity.io",
-      },
-      {
-        protocol: "https",
-        hostname: "lh3.googleusercontent.com",
-      },
-      {
-        protocol: "https",
-        hostname: "avatars.githubusercontent.com",
-      },
-      {
-        protocol: "https",
         hostname: "t.me",
       },
       {
@@ -26,22 +14,50 @@ const nextConfig = {
         protocol: "https",
         hostname: "**.telegram.org",
       },
-      {
-        protocol: "http",
-        hostname: "**",
-      },
-      {
-        protocol: "https",
-        hostname: "**",
-      },
     ],
   },
 
-  async rewrites() {
+  async headers() {
     return [
       {
-        source: "/api/:path*", // Локальный путь
-        destination: "https://127.0.0.1:6001/:path*",
+        source: "/(.*)",
+        headers: [
+          { key: "X-Frame-Options", value: "DENY" },
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(), microphone=(), geolocation=()",
+          },
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+              "style-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: https: blob:",
+              "connect-src 'self' https:",
+              "font-src 'self' data:",
+              "frame-ancestors 'none'",
+            ].join("; "),
+          },
+        ],
+      },
+    ];
+  },
+
+  async rewrites() {
+    if (process.env.NODE_ENV !== "development") {
+      return [];
+    }
+
+    const devApiTarget =
+      process.env.DEV_API_REWRITE_TARGET || "https://127.0.0.1:6001";
+
+    return [
+      {
+        source: "/dev-api/:path*",
+        destination: `${devApiTarget}/:path*`,
       },
     ];
   },

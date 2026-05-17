@@ -19,7 +19,7 @@ const notificationList = [
     subTitle: "Congratulate him",
   },
   {
-    image: "/images/user/download.png",
+    image: "/images/user/avatar-placeholder.svg",
     title: "New message",
     subTitle: "Devid sent a new message",
   },

@@ -1,43 +1,32 @@
 import axios from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-
 const apiClient = axios.create({
-  baseURL: API_BASE_URL,
+  baseURL: "/api/backend",
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true,
 });
-
-apiClient.interceptors.request.use(
-  (config) => {
-    const accessToken = localStorage.getItem("token");
-    if (accessToken) {
-      // Если токен существует, добавляем его в заголовки Authorization
-      config.headers.Authorization = `Bearer ${accessToken}`;
-    }
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  },
-);
 
 apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const originalRequest = error.config;
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (error.response?.status === 401 && !originalRequest?._retry) {
       originalRequest._retry = true;
 
-      console.warn("Токен недействителен, удаляем...");
-      localStorage.removeItem("token");
+      try {
+        await fetch("/api/auth/logout", { method: "POST" });
+      } catch {
+        // ignore
+      }
 
-      window.location.href = "/login";
-
-      return Promise.reject(error);
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
     }
+
     return Promise.reject(error);
   },
 );

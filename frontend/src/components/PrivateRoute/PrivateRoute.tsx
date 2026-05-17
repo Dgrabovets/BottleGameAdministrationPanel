@@ -1,6 +1,8 @@
 "use client";
-import { useEffect, useState } from "react";
+
+import { useSession } from "@/hooks/use-session";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 type Props = {
   children: React.ReactNode;
@@ -11,33 +13,25 @@ export default function PrivateRoute({
   children,
   requiredRole = "Admin",
 }: Props) {
-  const [isAuthorized, setIsAuthorized] = useState(false);
+  const { session, loading } = useSession();
   const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    const userRaw = localStorage.getItem("user");
+    if (loading) return;
 
-    if (!token || !userRaw) {
+    if (!session) {
       router.replace("/login");
       return;
     }
 
-    try {
-      const user = JSON.parse(userRaw);
-      if (user.role !== requiredRole) {
-        router.replace("/");
-        return;
-      }
-
-      setIsAuthorized(true);
-    } catch (err) {
-      console.error("Ошибка при проверке авторизации", err);
-      router.replace("/login");
+    if (session.role !== requiredRole) {
+      router.replace("/");
     }
-  }, [router, requiredRole]);
+  }, [loading, session, requiredRole, router]);
 
-  if (!isAuthorized) return null;
+  if (loading || !session || session.role !== requiredRole) {
+    return null;
+  }
 
   return <>{children}</>;
 }
