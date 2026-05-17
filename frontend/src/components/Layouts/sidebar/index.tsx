@@ -1,4 +1,5 @@
 "use client";
+import { useSession } from "@/hooks/use-session";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -6,30 +7,20 @@ import { NAV_DATA } from "./data";
 import { ArrowLeftIcon } from "./icons";
 import { MenuItem } from "./menu-item";
 import { useSidebarContext } from "./sidebar-context";
-import { useEffect, useState } from "react";
 
 export function Sidebar() {
   const pathname = usePathname();
   const { setIsOpen, isOpen, isMobile, toggleSidebar } = useSidebarContext();
-
-  const [userRole, setUserRole] = useState<string | null>(null);
-
-  useEffect(() => {
-    const userRaw = localStorage.getItem("user");
-    if (userRaw) {
-      try {
-        const user = JSON.parse(userRaw);
-        setUserRole(user.role);
-      } catch (e) {
-        console.error("Ошибка при разборе user", e);
-      }
-    }
-  }, []);
+  const { session } = useSession();
+  const userRole = session?.role ?? null;
 
   const filteredNav = NAV_DATA.map((section) => ({
     ...section,
     items: section.items.filter((item) => {
-      if (item.title === "Настройки игры" && userRole !== "Admin") {
+      if (
+        (item.title === "Настройки игры" || item.title === "Модераторы") &&
+        userRole !== "Admin"
+      ) {
         return false;
       }
       return true;
@@ -38,7 +29,6 @@ export function Sidebar() {
 
   return (
     <>
-      {/* Mobile Overlay */}
       {isMobile && isOpen && (
         <div
           className="fixed inset-0 z-40 bg-black/50 transition-opacity duration-300"
@@ -81,7 +71,6 @@ export function Sidebar() {
             )}
           </div>
 
-          {/* Navigation */}
           <div className="custom-scrollbar mt-6 flex-1 overflow-y-auto pr-3 min-[850px]:mt-10">
             {filteredNav.map((section) => (
               <div key={section.label} className="mb-6">
@@ -108,8 +97,6 @@ export function Sidebar() {
 
                               <span>{item.title}</span>
                             </MenuItem>
-
-                            {/* Убираем этот блок с подменю */}
                           </div>
                         ) : (
                           (() => {

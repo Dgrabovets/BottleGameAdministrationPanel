@@ -3,64 +3,42 @@ import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import Image from "next/image";
 import { SyntheticEvent, useState } from "react";
 import { useRouter } from "next/navigation";
-import { jwtDecode } from "jwt-decode";
 
 import { EmailIcon, PasswordIcon } from "@/assets/icons";
 import InputGroup from "@/components/FormElements/InputGroup";
-
-interface DecodedToken {
-  [key: string]: any;
-}
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
-
-  const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
   const submitAuth = async (e: SyntheticEvent) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
 
-    const response = await fetch(`${apiUrl}/auth/admin-login`, {
-      method: "POST",
-      body: JSON.stringify({ login: email, password: password }),
-      headers: { "Content-Type": "application/json" },
-    });
+    try {
+      const response = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ login: email, password }),
+      });
 
-    if (response.status != 200) {
-      setError("Не валидные данные");
-      return null;
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}));
+        setError(data?.error || "Не валидные данные");
+        return;
+      }
+
+      router.push("/");
+      router.refresh();
+    } catch {
+      setError("Ошибка сети. Попробуйте снова.");
+    } finally {
+      setLoading(false);
     }
-    const data = await response.json();
-    const token = data?.token;
-
-    if (!token) {
-      setError("Токен не получен");
-      return;
-    }
-
-    localStorage.setItem("token", data?.token);
-    const decoded: DecodedToken = jwtDecode(token);
-
-    const userId =
-      decoded[
-        "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
-      ];
-    const userEmail =
-      decoded["http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"];
-    // const role = "Dolboeb";
-    const role =
-      decoded["http://schemas.microsoft.com/ws/2008/06/identity/claims/role"];
-
-    localStorage.setItem("user", JSON.stringify({ userId, userEmail, role }));
-
-    router.push("/");
-
-    setTimeout(() => {
-      window.location.reload();
-    }, 500);
   };
 
   return (
@@ -99,9 +77,10 @@ export default function SignIn() {
                 <div className="mb-4.5">
                   <button
                     type="submit"
-                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary p-4 font-medium text-white transition hover:bg-opacity-90"
+                    disabled={loading}
+                    className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary p-4 font-medium text-white transition hover:bg-opacity-90 disabled:opacity-60"
                   >
-                    Войти
+                    {loading ? "Вход..." : "Войти"}
                   </button>
                 </div>
               </form>

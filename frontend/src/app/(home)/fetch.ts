@@ -23,7 +23,7 @@ export async function getChatsData() {
   return [
     {
       name: "User 1",
-      profile: "/images/user/download.png",
+      profile: "/images/user/avatar-placeholder.svg",
       isActive: true,
       lastMessage: {
         content: "See you tomorrow at the meeting!",
@@ -35,7 +35,7 @@ export async function getChatsData() {
     },
     {
       name: "User 2",
-      profile: "/images/user/download.png",
+      profile: "/images/user/avatar-placeholder.svg",
       isActive: true,
       lastMessage: {
         content: "Thanks for the update",
@@ -47,7 +47,7 @@ export async function getChatsData() {
     },
     {
       name: "User 3",
-      profile: "/images/user/download.png",
+      profile: "/images/user/avatar-placeholder.svg",
       isActive: false,
       lastMessage: {
         content: "What's up?",
@@ -59,7 +59,7 @@ export async function getChatsData() {
     },
     {
       name: "User 4",
-      profile: "/images/user/download.png",
+      profile: "/images/user/avatar-placeholder.svg",
       isActive: false,
       lastMessage: {
         content: "Where are you now?",
@@ -71,7 +71,7 @@ export async function getChatsData() {
     },
     {
       name: "User 5",
-      profile: "/images/user/download.png",
+      profile: "/images/user/avatar-placeholder.svg",
       isActive: false,
       lastMessage: {
         content: "Hey, how are you?",

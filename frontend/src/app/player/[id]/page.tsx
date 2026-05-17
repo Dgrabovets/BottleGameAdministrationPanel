@@ -6,6 +6,7 @@ import PlayerRounds from "./_components/player-rounds";
 import InputGroup from "@/components/FormElements/InputGroup";
 import { UserIcon } from "@/assets/icons";
 import { PlayerData, Transaction } from "@/components/types";
+import { useSession } from "@/hooks/use-session";
 import { useEffect, useState } from "react";
 import { playersApi } from "@/api/playersApi";
 import PlayerTransactions from "./_components/player-transactions";
@@ -22,19 +23,10 @@ export default function SettingsPage() {
   const [balance, setBalance] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [winChance, setWinChance] = useState<number>(0);
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const { session } = useSession();
+  const userRole = session?.role ?? null;
 
   useEffect(() => {
-    const userRaw = localStorage.getItem("user");
-    if (userRaw) {
-      try {
-        const user = JSON.parse(userRaw);
-        setUserRole(user.role);
-      } catch (err) {
-        console.error("Ошибка при разборе user", err);
-      }
-    }
-
     const fetchUsers = async () => {
       try {
         if (idNumber) {
