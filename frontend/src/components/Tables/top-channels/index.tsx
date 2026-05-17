@@ -6,7 +6,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { compactFormat, standardFormat } from "@/lib/format-number";
+import { compactFormat, formatRub } from "@/lib/format-number";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import { getTopChannels } from "../fetch";
@@ -57,7 +57,7 @@ export async function TopChannels({ className }: { className?: string }) {
               <TableCell>{compactFormat(channel.visitors)}</TableCell>
 
               <TableCell className="!text-right text-green-light-1">
-                ${standardFormat(channel.revenues)}
+                {formatRub(channel.revenues)}
               </TableCell>
 
               <TableCell>{channel.sales}</TableCell>

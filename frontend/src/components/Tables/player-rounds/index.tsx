@@ -50,7 +50,7 @@ export function PlayerRoundsTable({ data }: PlayerRoundsProps) {
               className="border-[#eee] dark:border-dark-3"
             >
               <TableCell className="min-w-[155px] font-medium xl:pl-7.5">
-                <h5 className="text-dark dark:text-white">${item.bet}</h5>
+                <h5 className="text-dark dark:text-white">{item.bet} ₽</h5>
               </TableCell>
 
               <TableCell>

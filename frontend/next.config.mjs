@@ -1,27 +1,38 @@
 /** @type {import("next").NextConfig} */
 const nextConfig = {
   images: {
-    domains: ["localhost"],
     remotePatterns: [
       {
         protocol: "https",
         hostname: "cdn.sanity.io",
-        port: "",
       },
       {
         protocol: "https",
         hostname: "lh3.googleusercontent.com",
-        port: "",
       },
       {
         protocol: "https",
         hostname: "avatars.githubusercontent.com",
-        port: "",
+      },
+      {
+        protocol: "https",
+        hostname: "t.me",
+      },
+      {
+        protocol: "https",
+        hostname: "telegram.org",
+      },
+      {
+        protocol: "https",
+        hostname: "**.telegram.org",
       },
       {
         protocol: "http",
-        hostname: "*",
-        port: "",
+        hostname: "**",
+      },
+      {
+        protocol: "https",
+        hostname: "**",
       },
     ],
   },

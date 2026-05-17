@@ -1,7 +1,6 @@
 "use client";
 import Breadcrumb from "@/components/Breadcrumbs/Breadcrumb";
 import Image from "next/image";
-import Link from "next/link";
 import { SyntheticEvent, useState } from "react";
 import { useRouter } from "next/navigation";
 import { jwtDecode } from "jwt-decode";
@@ -111,9 +110,9 @@ export default function SignIn() {
 
           <div className="hidden w-full xl:block xl:w-1/2">
             <div className="custom-gradient-1 overflow-hidden rounded-2xl px-12.5 pt-12.5 dark:!bg-dark-2 dark:bg-none">
-              <Link className="mb-10 inline-block" href="/">
-                <h1>GLG Studio</h1>
-              </Link>
+              <p className="mb-10 text-heading-5 font-bold text-dark dark:text-white">
+                Панель администратора
+              </p>
               <p className="mb-3 text-xl font-medium text-dark dark:text-white">
                 Войдите в ваш аккаунт
               </p>

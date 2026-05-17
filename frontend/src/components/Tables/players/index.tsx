@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import Image from "next/image";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { PlayerData } from "@/components/types";
@@ -32,15 +32,6 @@ export function Players() {
 
     fetchUsers();
   }, []);
-
-  const isValidUrl = (url: string) => {
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
-  };
 
   return (
     <div className="rounded-[10px] bg-white shadow-1 dark:bg-gray-dark dark:shadow-card">
@@ -75,17 +66,12 @@ export function Players() {
                   passHref
                   className="flex min-w-fit items-center gap-3"
                 >
-                  <Image
-                    src={
-                      isValidUrl(player.player.avatarUrl)
-                        ? player.player.avatarUrl
-                        : "/images/user/download.png"
-                    }
-                    className="w-15 rounded-full object-cover"
+                  <PlayerAvatar
+                    src={player.player.avatarUrl}
+                    className="w-15"
                     width={50}
                     height={50}
                     alt={"Player Avatar" + player.player.name}
-                    role="presentation"
                   />
                   <div>{player.player.name}</div>
                 </Link>
@@ -93,7 +79,7 @@ export function Players() {
 
               {/* <TableCell>{player.email}</TableCell> */}
 
-              <TableCell>${player.balance}</TableCell>
+              <TableCell>{player.balance} ₽</TableCell>
 
               <TableCell>{player.player.winRate?.toFixed(2)}%</TableCell>
 

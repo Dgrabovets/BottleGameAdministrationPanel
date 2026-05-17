@@ -1,5 +1,5 @@
 "use client";
-import { compactFormat } from "@/lib/format-number";
+import { compactFormat, formatRub } from "@/lib/format-number";
 import { getOverviewData } from "../../fetch";
 import { OverviewCard } from "./card";
 import * as icons from "./icons";
@@ -64,7 +64,7 @@ export function OverviewCardsGroup() {
         label="Посетители"
         data={{
           ...data.views,
-          value: compactFormat(data.views.value),
+          value: formatRub(data.views.value, true),
         }}
         Icon={icons.Views}
       />
@@ -73,7 +73,7 @@ export function OverviewCardsGroup() {
         label="Доход"
         data={{
           ...data.profit,
-          value: "$" + compactFormat(data.profit.value),
+          value: formatRub(data.profit.value, true),
         }}
         Icon={icons.Profit}
       />

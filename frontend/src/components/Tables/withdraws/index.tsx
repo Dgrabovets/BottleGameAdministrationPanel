@@ -8,7 +8,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
+import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { ConfirmIcon, CancelIcon } from "../icons";
 import { useEffect, useState } from "react";
 import { transactionsApi } from "@/api/transactionsApi";
@@ -102,14 +102,6 @@ export function Withdraws() {
     return <div></div>;
   }
 
-  const isValidUrl = (url: string) => {
-    try {
-      new URL(url);
-      return true;
-    } catch {
-      return false;
-    }
-  };
   return (
     <div className="rounded-[10px] border border-stroke bg-white shadow-1 dark:border-dark-3 dark:bg-gray-dark dark:shadow-card">
       <div className="px-6 py-4 sm:px-7 sm:py-5 xl:px-8.5">
@@ -135,17 +127,12 @@ export function Withdraws() {
           {formattedData.map((item, index) => (
             <TableRow key={index} className="border-[#eee] dark:border-dark-3">
               <TableCell className="flex min-w-fit items-center gap-3">
-                <Image
-                  src={
-                    isValidUrl(item?.playerAvatar)
-                      ? item?.playerAvatar
-                      : "/images/user/download.png"
-                  }
-                  className="w-15 rounded-full object-cover"
+                <PlayerAvatar
+                  src={item.playerAvatar}
+                  className="w-15"
                   width={50}
                   height={50}
                   alt={"Player Avatar" + item.playerName}
-                  role="presentation"
                 />
                 <h5 className="font-medium text-dark dark:text-white">
                   {item.playerName}
@@ -153,7 +140,7 @@ export function Withdraws() {
               </TableCell>
 
               <TableCell className="min-w-[155px] font-medium xl:pl-7.5">
-                <h5 className="text-dark dark:text-white">${item.amount}</h5>
+                <h5 className="text-dark dark:text-white">{item.amount} ₽</h5>
               </TableCell>
 
               <TableCell>
