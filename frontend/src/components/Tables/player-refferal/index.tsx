@@ -11,6 +11,7 @@ import { PlayerData } from "@/components/types";
 import { useState } from "react";
 import Link from "next/link";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { getPlayerAvatarUrl } from "@/lib/player-avatar";
 
 interface PlayerReferralProps {
   data: PlayerData;
@@ -50,7 +51,7 @@ export function PlayerRefferalTable({ data }: PlayerReferralProps) {
                   className="flex min-w-fit items-center gap-3"
                 >
                   <PlayerAvatar
-                    src={item.avatarUrl}
+                    src={getPlayerAvatarUrl(item)}
                     className="w-15"
                     width={50}
                     height={50}

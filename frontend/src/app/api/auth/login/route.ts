@@ -1,4 +1,9 @@
 import {
+  checkLoginRateLimit,
+  getLoginRateLimitClientKey,
+  isSameOriginRequest,
+} from "@/lib/api-security";
+import {
   AUTH_COOKIE_NAME,
   getAdminSessionFromToken,
   getBackendApiUrl,
@@ -7,13 +12,33 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
+    const host = request.nextUrl.host;
+    if (!isSameOriginRequest(request, host)) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+
+    const clientKey = getLoginRateLimitClientKey(request);
+    if (!checkLoginRateLimit(clientKey)) {
+      return NextResponse.json(
+        { error: "Слишком много попыток. Попробуйте позже." },
+        { status: 429 },
+      );
+    }
+
     const body = await request.json();
     const login = body?.login ?? body?.email;
     const password = body?.password;
 
-    if (!login || !password) {
+    if (!login || !password || typeof login !== "string" || typeof password !== "string") {
       return NextResponse.json(
         { error: "Логин и пароль обязательны" },
+        { status: 400 },
+      );
+    }
+
+    if (login.length > 256 || password.length > 256) {
+      return NextResponse.json(
+        { error: "Некорректные данные" },
         { status: 400 },
       );
     }
@@ -22,14 +47,15 @@ export async function POST(request: NextRequest) {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ login, password }),
+      redirect: "error",
     });
 
     const data = await backendResponse.json().catch(() => ({}));
 
     if (!backendResponse.ok) {
       return NextResponse.json(
-        { error: data?.title || data?.error || "Неверные учетные данные" },
-        { status: backendResponse.status },
+        { error: "Неверные учетные данные" },
+        { status: 401 },
       );
     }
 
