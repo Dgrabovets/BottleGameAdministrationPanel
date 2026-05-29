@@ -34,7 +34,11 @@ export default function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  if (pathname.startsWith("/api/backend") && !token) {
+  if (
+    (pathname.startsWith("/api/backend") ||
+      pathname.startsWith("/api/avatar")) &&
+    !token
+  ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

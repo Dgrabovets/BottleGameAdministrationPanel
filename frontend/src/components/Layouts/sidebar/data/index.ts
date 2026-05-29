@@ -63,12 +63,6 @@ export const NAV_DATA: SectionType[] = [
         url: "/moderators",
         items: [],
       },
-      {
-        title: "Выйти",
-        icon: Icons.Authentication,
-        url: "/logout",
-        items: [],
-      },
     ],
   },
 ];

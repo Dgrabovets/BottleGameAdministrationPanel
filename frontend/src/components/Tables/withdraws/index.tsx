@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { getPlayerAvatarUrl } from "@/lib/player-avatar";
 import { ConfirmIcon, CancelIcon } from "../icons";
 import { useEffect, useState } from "react";
 import { transactionsApi } from "@/api/transactionsApi";
@@ -23,7 +24,7 @@ export function Withdraws() {
         .map((transaction) => ({
           playerName: playerData.player.name,
           playerId: playerData.player.id,
-          playerAvatar: playerData.player.avatarUrl,
+          playerAvatar: getPlayerAvatarUrl(playerData.player),
           transactionId: transaction.id,
           amount: transaction.amount,
           status: transaction.statusName,
@@ -41,7 +42,7 @@ export function Withdraws() {
         .map((transaction) => ({
           playerName: playerData.player.name,
           playerId: playerData.player.id,
-          playerAvatar: playerData.player.avatarUrl,
+          playerAvatar: getPlayerAvatarUrl(playerData.player),
           transactionId: transaction.id,
           amount: transaction.amount,
           status: transaction.statusName,

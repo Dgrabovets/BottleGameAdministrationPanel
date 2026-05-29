@@ -9,6 +9,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
+import { getPlayerAvatarUrl } from "@/lib/player-avatar";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import { PlayerData } from "@/components/types";
@@ -67,7 +68,7 @@ export function Players() {
                   className="flex min-w-fit items-center gap-3"
                 >
                   <PlayerAvatar
-                    src={player.player.avatarUrl}
+                    src={getPlayerAvatarUrl(player.player)}
                     className="w-15"
                     width={50}
                     height={50}
