@@ -17,11 +17,7 @@ export function normalizeAvatarUrl(url?: string | null): string | null {
   }
 
   if (!/^https?:\/\//i.test(trimmed)) {
-    if (
-      trimmed.startsWith("t.me/") ||
-      trimmed.includes("telesco.pe") ||
-      trimmed.includes("telegram")
-    ) {
+    if (trimmed.startsWith("t.me/")) {
       trimmed = `https://${trimmed}`;
     } else if (trimmed.startsWith("/")) {
       return trimmed;

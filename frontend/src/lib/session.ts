@@ -40,7 +40,19 @@ function readClaim(
   return null;
 }
 
+export function isTokenExpired(token: string): boolean {
+  const decoded = parseJwtPayload(token);
+  if (!decoded) return true;
+
+  const exp = decoded.exp;
+  if (typeof exp !== "number") return true;
+
+  return exp <= Math.floor(Date.now() / 1000);
+}
+
 export function getAdminSessionFromToken(token: string): AdminSession | null {
+  if (isTokenExpired(token)) return null;
+
   const decoded = parseJwtPayload(token);
   if (!decoded) return null;
 

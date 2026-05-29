@@ -2,6 +2,7 @@ import {
   ADMIN_ONLY_PATHS,
   AUTH_COOKIE_NAME,
   getAdminSessionFromToken,
+  isTokenExpired,
 } from "@/lib/session";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
@@ -21,6 +22,22 @@ function isStaticAsset(pathname: string): boolean {
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
+  const hasValidToken = Boolean(token && !isTokenExpired(token));
+
+  if (token && isTokenExpired(token)) {
+    const response = pathname.startsWith("/api/")
+      ? NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+      : NextResponse.redirect(new URL("/login", request.url));
+
+    response.cookies.set(AUTH_COOKIE_NAME, "", {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      path: "/",
+      maxAge: 0,
+    });
+    return response;
+  }
 
   if (isStaticAsset(pathname)) {
     return NextResponse.next();
@@ -37,7 +54,7 @@ export default function middleware(request: NextRequest) {
   if (
     (pathname.startsWith("/api/backend") ||
       pathname.startsWith("/api/avatar")) &&
-    !token
+    !hasValidToken
   ) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -46,18 +63,18 @@ export default function middleware(request: NextRequest) {
     (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
 
-  if (token && isPublicPage) {
+  if (hasValidToken && isPublicPage) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
-  if (!token && !isPublicPage && !pathname.startsWith("/api/")) {
+  if (!hasValidToken && !isPublicPage && !pathname.startsWith("/api/")) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("from", pathname);
     return NextResponse.redirect(loginUrl);
   }
 
-  if (token && ADMIN_ONLY_PATHS.some((path) => pathname.startsWith(path))) {
-    const session = getAdminSessionFromToken(token);
+  if (hasValidToken && ADMIN_ONLY_PATHS.some((path) => pathname.startsWith(path))) {
+    const session = getAdminSessionFromToken(token!);
     if (!session || session.role !== "Admin") {
       return NextResponse.redirect(new URL("/", request.url));
     }
