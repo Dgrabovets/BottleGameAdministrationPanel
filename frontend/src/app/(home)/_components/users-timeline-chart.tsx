@@ -1,6 +1,10 @@
 "use client";
 
-import { formatChartDate } from "@/lib/date-range";
+import {
+  buildTimelineXAxisOptions,
+  formatTooltipDate,
+  toChartSeriesData,
+} from "@/lib/chart-axis";
 import type { StatisticsTimeline } from "@/lib/statistics-types";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { ApexOptions } from "apexcharts";
@@ -15,16 +19,13 @@ type Props = {
 export function UsersTimelineChart({ timeline }: Props) {
   const isMobile = useIsMobile();
 
-  const categories = timeline.points.map((point) =>
-    formatChartDate(point.date, timeline.bucket),
-  );
-
   const options: ApexOptions = {
     chart: {
       type: "area",
       height: 300,
       toolbar: { show: false },
       fontFamily: "inherit",
+      zoom: { enabled: false },
     },
     colors: ["#18BFFF"],
     stroke: {
@@ -42,23 +43,19 @@ export function UsersTimelineChart({ timeline }: Props) {
     grid: {
       strokeDashArray: 5,
     },
-    xaxis: {
-      categories,
-      axisBorder: { show: false },
-      axisTicks: { show: false },
-      labels: {
-        rotate: -45,
-        style: { fontSize: "11px" },
-      },
-    },
+    xaxis: buildTimelineXAxisOptions(timeline, isMobile),
     yaxis: {
       labels: {
         formatter: (value) => Math.round(value).toString(),
       },
     },
     tooltip: {
+      x: {
+        formatter: (value) =>
+          formatTooltipDate(Number(value), timeline.bucket),
+      },
       y: {
-        formatter: (value) => `${Math.round(value)} игроков`,
+        formatter: (value) => String(Math.round(value)),
       },
     },
   };
@@ -73,7 +70,7 @@ export function UsersTimelineChart({ timeline }: Props) {
         series={[
           {
             name: "Игроки",
-            data: timeline.points.map((point) => point.usersCount),
+            data: toChartSeriesData(timeline, (point) => point.usersCount),
           },
         ]}
         type="area"

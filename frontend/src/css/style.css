@@ -175,9 +175,28 @@ span.flatpickr-weekday,
 
 .flatpickr-day.inRange {
   box-shadow:
-    -5px 0 0 #f3f4f6,
-    5px 0 0 #f3f4f6 !important;
-  @apply dark:!shadow-datepicker;
+    -5px 0 0 #dbeafe,
+    5px 0 0 #dbeafe !important;
+  @apply !border-blue-100 !bg-blue-100 dark:!border-primary/30 dark:!bg-primary/20 dark:!shadow-datepicker;
+}
+
+.statistics-date-range .flatpickr-calendar {
+  @apply !rounded-xl !border !border-stroke dark:!border-dark-3;
+}
+
+.statistics-date-range .flatpickr-day.selected.startRange,
+.statistics-date-range .flatpickr-day.startRange.startRange,
+.statistics-date-range .flatpickr-day.endRange.startRange {
+  border-radius: 9999px 0 0 9999px;
+}
+
+.statistics-date-range .flatpickr-day.selected.endRange,
+.statistics-date-range .flatpickr-day.endRange.endRange {
+  border-radius: 0 9999px 9999px 0;
+}
+
+.statistics-date-range .flatpickr-day.selected.startRange.endRange {
+  border-radius: 9999px;
 }
 
 .flatpickr-day.inRange,

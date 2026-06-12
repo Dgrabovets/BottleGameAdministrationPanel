@@ -1,7 +1,11 @@
 "use client";
 
+import { Calendar } from "@/components/Layouts/sidebar/icons";
 import { formatDateParam, getPresetPeriod } from "@/lib/date-range";
 import type { DateRange } from "@/lib/statistics-types";
+import flatpickr from "flatpickr";
+import { Russian } from "flatpickr/dist/l10n/ru.js";
+import { useEffect, useRef } from "react";
 
 type Props = {
   value: DateRange;
@@ -10,12 +14,8 @@ type Props = {
   onPreset?: (range: DateRange) => void;
 };
 
-function parseInputDate(value: string): Date {
-  const [year, month, day] = value.split("-").map(Number);
-  const date = new Date(year, month - 1, day);
-  date.setHours(0, 0, 0, 0);
-  return date;
-}
+const INPUT_HEIGHT_CLASS =
+  "h-11 rounded-lg border border-stroke bg-transparent px-4 text-sm text-dark outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white";
 
 export function DateRangeFilter({
   value,
@@ -23,6 +23,42 @@ export function DateRangeFilter({
   onApply,
   onPreset,
 }: Props) {
+  const inputRef = useRef<HTMLInputElement>(null);
+  const pickerRef = useRef<flatpickr.Instance | null>(null);
+
+  useEffect(() => {
+    if (!inputRef.current) return;
+
+    pickerRef.current = flatpickr(inputRef.current, {
+      mode: "range",
+      locale: Russian,
+      showMonths: 2,
+      monthSelectorType: "dropdown",
+      dateFormat: "d.m.Y",
+      maxDate: "today",
+      defaultDate: [value.from, value.till],
+      onChange: (selectedDates) => {
+        if (selectedDates.length === 0) return;
+
+        const from = selectedDates[0];
+        const till = selectedDates[1] ?? selectedDates[0];
+        from.setHours(0, 0, 0, 0);
+        till.setHours(0, 0, 0, 0);
+        onChange({ from, till });
+      },
+    });
+
+    return () => {
+      pickerRef.current?.destroy();
+      pickerRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- init once
+  }, []);
+
+  useEffect(() => {
+    pickerRef.current?.setDate([value.from, value.till], false);
+  }, [value.from, value.till]);
+
   const applyPreset = (days: number) => {
     const range = getPresetPeriod(days);
     onChange(range);
@@ -30,57 +66,42 @@ export function DateRangeFilter({
   };
 
   return (
-    <div className="mb-6 space-y-4">
-      <div className="flex flex-wrap items-end gap-4">
-        <div className="min-w-[180px] flex-1">
+    <div className="statistics-date-range mb-6 space-y-4">
+      <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
+        <div className="min-w-[260px] flex-1">
           <label className="mb-2 block text-sm font-medium text-dark-6">
-            Начало периода
+            Период
           </label>
-          <input
-            type="date"
-            value={formatDateParam(value.from)}
-            onChange={(event) =>
-              onChange({
-                from: parseInputDate(event.target.value),
-                till: value.till,
-              })
-            }
-            className="w-full rounded-lg border border-stroke bg-transparent px-4 py-2.5 text-dark outline-none focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white"
-          />
-        </div>
-
-        <div className="min-w-[180px] flex-1">
-          <label className="mb-2 block text-sm font-medium text-dark-6">
-            Конец периода
-          </label>
-          <input
-            type="date"
-            value={formatDateParam(value.till)}
-            onChange={(event) =>
-              onChange({
-                from: value.from,
-                till: parseInputDate(event.target.value),
-              })
-            }
-            className="w-full rounded-lg border border-stroke bg-transparent px-4 py-2.5 text-dark outline-none focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white"
-          />
+          <div className="relative">
+            <input
+              ref={inputRef}
+              type="text"
+              readOnly
+              placeholder="Выберите даты"
+              defaultValue={`${formatDateParam(value.from)} — ${formatDateParam(value.till)}`}
+              className={`w-full cursor-pointer pr-11 ${INPUT_HEIGHT_CLASS}`}
+            />
+            <div className="pointer-events-none absolute inset-y-0 right-4 flex items-center text-dark-5">
+              <Calendar className="size-5" />
+            </div>
+          </div>
         </div>
 
         <button
           type="button"
           onClick={onApply}
-          className="rounded-lg bg-dark px-5 py-2.5 text-sm font-medium text-white transition hover:opacity-90 dark:bg-white dark:text-dark"
+          className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-white transition hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
           Применить
         </button>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm text-dark-6">Таймлайн:</span>
+        <span className="text-sm text-dark-6">Быстрый выбор:</span>
         <button
           type="button"
           onClick={() => applyPreset(30)}
-          className="rounded-lg border border-stroke px-3 py-1.5 text-sm font-medium text-dark transition hover:bg-gray-2 dark:border-dark-3 dark:text-white dark:hover:bg-dark-2"
+          className="rounded-full border border-stroke px-3.5 py-1.5 text-sm font-medium text-dark transition hover:border-primary hover:text-primary dark:border-dark-3 dark:text-white"
         >
           30 дней
         </button>
@@ -96,7 +117,7 @@ export function DateRangeFilter({
             onChange(range);
             onPreset?.(range);
           }}
-          className="rounded-lg border border-stroke px-3 py-1.5 text-sm font-medium text-dark transition hover:bg-gray-2 dark:border-dark-3 dark:text-white dark:hover:bg-dark-2"
+          className="rounded-full border border-stroke px-3.5 py-1.5 text-sm font-medium text-dark transition hover:border-primary hover:text-primary dark:border-dark-3 dark:text-white"
         >
           12 месяцев
         </button>

@@ -1,6 +1,10 @@
 "use client";
 
-import { formatChartDate } from "@/lib/date-range";
+import {
+  buildTimelineXAxisOptions,
+  formatTooltipDate,
+  toChartSeriesData,
+} from "@/lib/chart-axis";
 import { formatRub } from "@/lib/format-number";
 import type { StatisticsTimeline } from "@/lib/statistics-types";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -16,16 +20,13 @@ type Props = {
 export function IncomeDepositsChart({ timeline }: Props) {
   const isMobile = useIsMobile();
 
-  const categories = timeline.points.map((point) =>
-    formatChartDate(point.date, timeline.bucket),
-  );
-
   const options: ApexOptions = {
     chart: {
       type: "line",
       height: 300,
       toolbar: { show: false },
       fontFamily: "inherit",
+      zoom: { enabled: false },
     },
     colors: ["#5750F1", "#0ABEF9"],
     stroke: {
@@ -40,21 +41,17 @@ export function IncomeDepositsChart({ timeline }: Props) {
     grid: {
       strokeDashArray: 5,
     },
-    xaxis: {
-      categories,
-      axisBorder: { show: false },
-      axisTicks: { show: false },
-      labels: {
-        rotate: -45,
-        style: { fontSize: "11px" },
-      },
-    },
+    xaxis: buildTimelineXAxisOptions(timeline, isMobile),
     yaxis: {
       labels: {
         formatter: (value) => formatRub(value, true),
       },
     },
     tooltip: {
+      x: {
+        formatter: (value) =>
+          formatTooltipDate(Number(value), timeline.bucket),
+      },
       y: {
         formatter: (value) => formatRub(value),
       },
@@ -71,11 +68,11 @@ export function IncomeDepositsChart({ timeline }: Props) {
         series={[
           {
             name: "Доход",
-            data: timeline.points.map((point) => point.incomeAmount),
+            data: toChartSeriesData(timeline, (point) => point.incomeAmount),
           },
           {
             name: "Пополнения",
-            data: timeline.points.map((point) => point.depositsAmount),
+            data: toChartSeriesData(timeline, (point) => point.depositsAmount),
           },
         ]}
         type="line"
