@@ -1,6 +1,7 @@
 import {
   checkLoginRateLimit,
   getLoginRateLimitClientKey,
+  getRequestHost,
   isSameOriginRequest,
 } from "@/lib/api-security";
 import {
@@ -12,7 +13,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-    const host = request.nextUrl.host;
+    const host = getRequestHost(request);
     if (!isSameOriginRequest(request, host)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
