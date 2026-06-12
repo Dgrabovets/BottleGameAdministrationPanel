@@ -99,16 +99,29 @@ export function isAvatarResponseWithinSize(
   return length <= MAX_AVATAR_BYTES;
 }
 
+function normalizeHost(host: string): string {
+  return host.replace(/:443$/i, "").replace(/:80$/i, "").toLowerCase();
+}
+
+export function getRequestHost(request: Request): string {
+  return (
+    request.headers.get("x-forwarded-host")?.split(",")[0]?.trim() ||
+    request.headers.get("host") ||
+    new URL(request.url).host
+  );
+}
+
 export function isSameOriginRequest(
   request: Request,
   expectedHost: string,
 ): boolean {
+  const expected = normalizeHost(expectedHost);
   const origin = request.headers.get("origin");
   const referer = request.headers.get("referer");
 
   if (origin) {
     try {
-      return new URL(origin).host === expectedHost;
+      return normalizeHost(new URL(origin).host) === expected;
     } catch {
       return false;
     }
@@ -116,7 +129,7 @@ export function isSameOriginRequest(
 
   if (referer) {
     try {
-      return new URL(referer).host === expectedHost;
+      return normalizeHost(new URL(referer).host) === expected;
     } catch {
       return false;
     }
@@ -127,8 +140,8 @@ export function isSameOriginRequest(
 
 const loginAttempts = new Map<string, { count: number; resetAt: number }>();
 
-const LOGIN_RATE_LIMIT = 10;
-const LOGIN_RATE_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_RATE_LIMIT = 25;
+const LOGIN_RATE_WINDOW_MS = 60 * 1000;
 
 export function checkLoginRateLimit(key: string): boolean {
   const now = Date.now();

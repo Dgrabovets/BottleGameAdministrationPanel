@@ -1,9 +1,9 @@
-import { isSameOriginRequest } from "@/lib/api-security";
+import { getRequestHost, isSameOriginRequest } from "@/lib/api-security";
 import { AUTH_COOKIE_NAME } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
-  const host = request.nextUrl.host;
+  const host = getRequestHost(request);
   if (!isSameOriginRequest(request, host)) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
