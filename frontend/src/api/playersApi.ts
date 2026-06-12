@@ -1,4 +1,5 @@
-import apiClient from "./axiosInstance"; // Импортируем apiClient
+import axios from "axios";
+import apiClient from "./axiosInstance";
 import { PlayerData } from "@/components/types";
 
 export type PlayersListParams = {
@@ -6,15 +7,38 @@ export type PlayersListParams = {
   name?: string;
 };
 
+function buildPlayersListUrl(params?: PlayersListParams): string {
+  if (!params) {
+    return "/Player/get-all-players";
+  }
+
+  const searchParams = new URLSearchParams();
+  if (params.telegramId != null) {
+    searchParams.set("telegramId", String(params.telegramId));
+  }
+  if (params.name) {
+    searchParams.set("name", params.name);
+  }
+
+  const query = searchParams.toString();
+  return query ? `/Player/get-all-players?${query}` : "/Player/get-all-players";
+}
+
 export const playersApi = {
   getPlayersList: async (
     params?: PlayersListParams,
   ): Promise<PlayerData[]> => {
-    const response = await apiClient.get<PlayerData[]>(
-      "/Player/get-all-players",
-      { params },
-    );
-    return response.data;
+    try {
+      const response = await apiClient.get<PlayerData[]>(
+        buildPlayersListUrl(params),
+      );
+      return response.data ?? [];
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return params ? [] : [];
+      }
+      throw error;
+    }
   },
   banPlayer: async (playerId: number, banReason: string) => {
     const response = await apiClient.post("/Player/ban-player", {

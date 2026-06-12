@@ -7,7 +7,8 @@ import InputGroup from "@/components/FormElements/InputGroup";
 import { UserIcon } from "@/assets/icons";
 import { PlayerData, Transaction } from "@/components/types";
 import { useSession } from "@/hooks/use-session";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { cn } from "@/lib/utils";
 import { playersApi } from "@/api/playersApi";
 import PlayerTransactions from "./_components/player-transactions";
 import PlayerRefferal from "./_components/player-refferal";
@@ -23,21 +24,22 @@ export default function SettingsPage() {
   const [balance, setBalance] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [winChance, setWinChance] = useState<number>(0);
+  const [unbanLoading, setUnbanLoading] = useState(false);
   const { session } = useSession();
   const userRole = session?.role ?? null;
 
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        if (idNumber) {
-          const response = await playersApi.getPlayerDetails(idNumber);
-          setData(response);
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    };
+  const loadPlayer = useCallback(async () => {
+    if (!idNumber) return;
 
+    try {
+      const response = await playersApi.getPlayerDetails(idNumber);
+      setData(response);
+    } catch (err) {
+      console.error(err);
+    }
+  }, [idNumber]);
+
+  useEffect(() => {
     const fetchTransactions = async () => {
       try {
         if (idNumber) {
@@ -49,9 +51,9 @@ export default function SettingsPage() {
       }
     };
 
-    fetchUsers();
+    loadPlayer();
     fetchTransactions();
-  }, []);
+  }, [idNumber, loadPlayer]);
 
   useEffect(() => {
     if (data) {
@@ -73,6 +75,20 @@ export default function SettingsPage() {
       }
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const onUnban = async () => {
+    if (!idNumber) return;
+
+    setUnbanLoading(true);
+    try {
+      await playersApi.unbanPlayer(idNumber);
+      await loadPlayer();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setUnbanLoading(false);
     }
   };
 
@@ -158,7 +174,7 @@ export default function SettingsPage() {
             </form>
           </ShowcaseSection>
         </div>
-        <div className="col-span-5 xl:col-span-2">
+        <div className="col-span-5 flex flex-col gap-8 xl:col-span-2">
           <ShowcaseSection title="Баланс" className="!p-7">
             <div className="mb-5.5">
               <InputGroup
@@ -185,6 +201,37 @@ export default function SettingsPage() {
               </div>
             )}
           </ShowcaseSection>
+
+          {data.bannedAt && !isDisabled && (
+            <ShowcaseSection title="Модерация" className="!p-7">
+              <div className="mb-4 flex items-center gap-2">
+                <span className="rounded-full bg-[#D34053]/[0.08] px-3 py-1 text-sm font-medium text-[#D34053]">
+                  Забанен
+                </span>
+                <span className="text-sm text-dark-6">
+                  с{" "}
+                  {new Date(data.bannedAt).toLocaleDateString("ru-RU", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "numeric",
+                  })}
+                </span>
+              </div>
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={onUnban}
+                  disabled={unbanLoading}
+                  className={cn(
+                    "inline-flex h-10 items-center justify-center rounded-lg border border-[#219653] px-6 text-sm font-semibold text-[#219653] transition hover:bg-[#219653]/[0.08]",
+                    unbanLoading && "cursor-not-allowed opacity-50",
+                  )}
+                >
+                  Разбанить
+                </button>
+              </div>
+            </ShowcaseSection>
+          )}
         </div>
       </div>
       <PlayerRounds data={data} />
