@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils";
 import { playersApi } from "@/api/playersApi";
 import PlayerTransactions from "./_components/player-transactions";
 import PlayerRefferal from "./_components/player-refferal";
+import { ModalOverlay } from "@/components/ui/modal-overlay";
 
 export default function SettingsPage() {
   const { id } = useParams();
@@ -312,7 +313,7 @@ export default function SettingsPage() {
       <PlayerRefferal data={data} />
 
       {showBanModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <ModalOverlay>
           <div
             className="w-full max-w-md rounded-[10px] bg-white p-6 shadow-1 dark:bg-gray-dark"
             role="dialog"
@@ -361,7 +362,7 @@ export default function SettingsPage() {
               </button>
             </div>
           </div>
-        </div>
+        </ModalOverlay>
       )}
     </div>
   );
