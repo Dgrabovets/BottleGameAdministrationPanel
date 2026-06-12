@@ -1,10 +1,31 @@
 import apiClient from "./axiosInstance"; // Импортируем apiClient
 import { PlayerData } from "@/components/types";
 
+export type PlayersListParams = {
+  telegramId?: number;
+  name?: string;
+};
+
 export const playersApi = {
-  getPlayersList: async (): Promise<PlayerData[]> => {
+  getPlayersList: async (
+    params?: PlayersListParams,
+  ): Promise<PlayerData[]> => {
     const response = await apiClient.get<PlayerData[]>(
       "/Player/get-all-players",
+      { params },
+    );
+    return response.data;
+  },
+  banPlayer: async (playerId: number, banReason: string) => {
+    const response = await apiClient.post("/Player/ban-player", {
+      playerId,
+      banReason,
+    });
+    return response.data;
+  },
+  unbanPlayer: async (playerId: number) => {
+    const response = await apiClient.post(
+      `/Player/unban-player/${playerId}`,
     );
     return response.data;
   },

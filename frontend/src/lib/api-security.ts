@@ -5,6 +5,8 @@ const ALLOWED_BACKEND_PATH_PATTERNS: RegExp[] = [
   /^Player\/get-top100-players$/,
   /^Player\/get-player\/\d+$/,
   /^Player\/edit-player\/\d+$/,
+  /^Player\/ban-player$/,
+  /^Player\/unban-player\/\d+$/,
   /^Balance\/get-all-transactions$/,
   /^Balance\/get-player-transactions\/\d+$/,
   /^Balance\/update-transaction-status\/\d+$/,
