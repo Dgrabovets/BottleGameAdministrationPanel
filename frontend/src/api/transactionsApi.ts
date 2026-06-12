@@ -1,27 +1,30 @@
 import apiClient from "./axiosInstance";
-import { dedupeTransactionsList } from "@/lib/transactions";
-import {
-  fetchActivelyBannedPlayerIds,
-  filterTransactionsByBannedIds,
-} from "@/lib/exclude-banned";
 import { playersApi } from "@/api/playersApi";
+import {
+  filterTransactionsByBannedIds,
+  loadRawTransactionsList,
+  resolveBannedPlayerIdsFromData,
+} from "@/lib/exclude-banned";
 import type { PlayerTransactions } from "@/components/types";
 
-async function loadTransactionsWithoutBanned(): Promise<PlayerTransactions[]> {
-  const response = await apiClient.get<PlayerTransactions[]>(
-    "/Balance/get-all-transactions",
-  );
-  const deduped = dedupeTransactionsList(response.data ?? []);
-  const bannedIds = await fetchActivelyBannedPlayerIds(() =>
-    playersApi.getActivelyBannedPlayerIds(),
-  );
-  return filterTransactionsByBannedIds(deduped, bannedIds);
+async function loadBannedAwareTransactions(): Promise<PlayerTransactions[]> {
+  const [activePlayers, rawTransactions] = await Promise.all([
+    playersApi.getPlayersList(),
+    loadRawTransactionsList(),
+  ]);
+
+  const bannedIds = resolveBannedPlayerIdsFromData({
+    activePlayers,
+    rawTransactions,
+  });
+
+  return filterTransactionsByBannedIds(rawTransactions, bannedIds);
 }
 
 export const transactionsApi = {
   getTransactionsList: async (): Promise<PlayerTransactions[]> => {
     try {
-      return await loadTransactionsWithoutBanned();
+      return await loadBannedAwareTransactions();
     } catch (error) {
       console.error("Ошибка при получении данных:", error);
       throw error;

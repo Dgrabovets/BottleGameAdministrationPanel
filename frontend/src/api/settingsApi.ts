@@ -1,10 +1,12 @@
 import apiClient from "./axiosInstance";
 import { playersApi } from "@/api/playersApi";
-import { transactionsApi } from "@/api/transactionsApi";
 import { GameSettings } from "@/components/types";
 import {
-  fetchActivelyBannedPlayerIds,
+  filterTransactionsByBannedIds,
+  loadRawTransactionsList,
   recalculateStatisticsExcludingBanned,
+  recalculateTimelineExcludingBanned,
+  resolveBannedPlayerIdsFromData,
 } from "@/lib/exclude-banned";
 import type {
   AppStatistics,
@@ -64,26 +66,39 @@ function normalizeTimeline(data: Record<string, unknown>): StatisticsTimeline {
   };
 }
 
+async function loadBannedAwareData() {
+  const [activePlayers, rawTransactions] = await Promise.all([
+    playersApi.getPlayersList(),
+    loadRawTransactionsList(),
+  ]);
+
+  const bannedIds = resolveBannedPlayerIdsFromData({
+    activePlayers,
+    rawTransactions,
+  });
+
+  const transactions = filterTransactionsByBannedIds(
+    rawTransactions,
+    bannedIds,
+  );
+
+  return { activePlayers, transactions, bannedIds };
+}
+
 async function applyBannedExclusion(
   stats: AppStatistics,
   params?: StatisticsParams,
 ): Promise<AppStatistics> {
-  const bannedIds = await fetchActivelyBannedPlayerIds(() =>
-    playersApi.getActivelyBannedPlayerIds(),
-  );
+  const { activePlayers, transactions, bannedIds } =
+    await loadBannedAwareData();
 
   if (bannedIds.size === 0) {
     return stats;
   }
 
-  const [players, transactions] = await Promise.all([
-    playersApi.getPlayersList(),
-    transactionsApi.getTransactionsList(),
-  ]);
-
   const recalculated = recalculateStatisticsExcludingBanned(
     transactions,
-    players,
+    activePlayers,
     params,
   );
 
@@ -140,7 +155,20 @@ export const settingsApi = {
     const response = await apiClient.get("/Admin/get-statistics-timeline", {
       params,
     });
-    return normalizeTimeline(response.data);
+    const timeline = normalizeTimeline(response.data);
+
+    const { activePlayers, transactions, bannedIds } =
+      await loadBannedAwareData();
+
+    if (bannedIds.size === 0) {
+      return timeline;
+    }
+
+    return recalculateTimelineExcludingBanned(
+      timeline,
+      transactions,
+      activePlayers,
+    );
   },
   getAppBalance: async () => {
     const response = await apiClient.get("/Admin/get-app-balance");

@@ -2,7 +2,6 @@ import { getBackendApiUrl } from "@/lib/session";
 
 const ALLOWED_BACKEND_PATH_PATTERNS: RegExp[] = [
   /^Player\/get-all-players$/,
-  /^Player\/actively-banned-player-ids$/,
   /^Player\/get-top100-players$/,
   /^Player\/get-player\/\d+$/,
   /^Player\/edit-player\/\d+$/,

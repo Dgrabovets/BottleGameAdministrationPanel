@@ -1,31 +1,92 @@
-import type { AppStatistics } from "@/lib/statistics-types";
+import apiClient from "@/api/axiosInstance";
+import { dedupeTransactionsList } from "@/lib/transactions";
+import type { AppStatistics, StatisticsTimeline } from "@/lib/statistics-types";
 import type { PlayerData, PlayerTransactions } from "@/components/types";
 
-let bannedIdsCache: Set<number> | null = null;
-let bannedIdsCacheAt = 0;
-const BANNED_IDS_CACHE_MS = 15_000;
+const BANNED_IDS_STORAGE_KEY = "bottle_admin_banned_player_ids";
 
-export function invalidateBannedPlayersCache(): void {
-  bannedIdsCache = null;
-  bannedIdsCacheAt = 0;
-}
-
-export async function fetchActivelyBannedPlayerIds(
-  loader: () => Promise<number[]>,
-): Promise<Set<number>> {
-  const now = Date.now();
-  if (bannedIdsCache && now - bannedIdsCacheAt < BANNED_IDS_CACHE_MS) {
-    return bannedIdsCache;
+function readStoredBannedIds(): Set<number> {
+  if (typeof window === "undefined") {
+    return new Set();
   }
 
   try {
-    const ids = await loader();
-    bannedIdsCache = new Set(ids);
-    bannedIdsCacheAt = now;
-    return bannedIdsCache;
+    const raw = sessionStorage.getItem(BANNED_IDS_STORAGE_KEY);
+    if (!raw) return new Set();
+    const parsed = JSON.parse(raw) as number[];
+    return new Set(parsed.filter((id) => Number.isInteger(id) && id > 0));
   } catch {
     return new Set();
   }
+}
+
+function writeStoredBannedIds(ids: Set<number>): void {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  sessionStorage.setItem(BANNED_IDS_STORAGE_KEY, JSON.stringify([...ids]));
+}
+
+export function rememberBannedPlayerId(playerId: number): void {
+  const ids = readStoredBannedIds();
+  ids.add(playerId);
+  writeStoredBannedIds(ids);
+}
+
+export function forgetBannedPlayerId(playerId: number): void {
+  const ids = readStoredBannedIds();
+  ids.delete(playerId);
+  writeStoredBannedIds(ids);
+}
+
+export async function loadRawTransactionsList(): Promise<PlayerTransactions[]> {
+  const response = await apiClient.get<PlayerTransactions[]>(
+    "/Balance/get-all-transactions",
+  );
+  return dedupeTransactionsList(response.data ?? []);
+}
+
+function collectTransactionPlayerIds(
+  transactions: PlayerTransactions[],
+): Set<number> {
+  const ids = new Set<number>();
+  for (const item of transactions) {
+    const playerId = item.player?.id;
+    if (playerId) {
+      ids.add(playerId);
+    }
+  }
+  return ids;
+}
+
+export type ResolveBannedPlayerIdsOptions = {
+  activePlayers: PlayerData[];
+  rawTransactions: PlayerTransactions[];
+};
+
+export function resolveBannedPlayerIdsFromData(
+  options: ResolveBannedPlayerIdsOptions,
+): Set<number> {
+  const banned = new Set<number>(readStoredBannedIds());
+
+  const activeIds = new Set(
+    options.activePlayers.map((player) => player.player.id),
+  );
+
+  for (const playerId of collectTransactionPlayerIds(options.rawTransactions)) {
+    if (!activeIds.has(playerId)) {
+      banned.add(playerId);
+    }
+  }
+
+  for (const player of options.activePlayers) {
+    if (player.bannedAt != null) {
+      banned.add(player.player.id);
+    }
+  }
+
+  return banned;
 }
 
 export function filterTransactionsByBannedIds(
@@ -93,7 +154,11 @@ export function recalculateStatisticsExcludingBanned(
       (transaction) =>
         transaction.typeName === "Пополнение" &&
         transaction.statusName === "Одобрено" &&
-        isWithinRange(transaction.processedAt, params?.dateFrom, params?.dateTill),
+        isWithinRange(
+          transaction.processedAt,
+          params?.dateFrom,
+          params?.dateTill,
+        ),
     )
     .reduce((sum, transaction) => sum + transaction.amount, 0);
 
@@ -103,7 +168,11 @@ export function recalculateStatisticsExcludingBanned(
       (transaction) =>
         transaction.typeName === "Вывод" &&
         transaction.statusName === "Одобрено" &&
-        isWithinRange(transaction.processedAt, params?.dateFrom, params?.dateTill),
+        isWithinRange(
+          transaction.processedAt,
+          params?.dateFrom,
+          params?.dateTill,
+        ),
     )
     .reduce((sum, transaction) => sum + transaction.amount, 0);
 
@@ -111,7 +180,8 @@ export function recalculateStatisticsExcludingBanned(
     .flatMap((item) => item.transactions)
     .filter(
       (transaction) =>
-        transaction.typeName === "Вывод" && transaction.statusName === "Ожидание",
+        transaction.typeName === "Вывод" &&
+        transaction.statusName === "Ожидание",
     )
     .reduce((sum, transaction) => sum + transaction.amount, 0);
 
@@ -135,4 +205,58 @@ export function recalculateStatisticsExcludingBanned(
       : players.reduce((sum, player) => sum + player.balance, 0),
     pendingWithdrawalsTotal: params ? undefined : pendingWithdrawals,
   };
+}
+
+function toDateKey(value: Date): string {
+  return value.toISOString().slice(0, 10);
+}
+
+export function recalculateTimelineExcludingBanned(
+  timeline: StatisticsTimeline,
+  transactions: PlayerTransactions[],
+  players: PlayerData[],
+): StatisticsTimeline {
+  const from = new Date(`${timeline.dateFrom}T00:00:00.000Z`);
+  const till = new Date(`${timeline.dateTill}T23:59:59.999Z`);
+
+  const points = timeline.points.map((point) => {
+    const pointDate = parseProcessedAt(point.date);
+    if (!pointDate) {
+      return { ...point, usersCount: 0, depositsAmount: 0, withdrawalsAmount: 0, incomeAmount: 0 };
+    }
+
+    const dateKey = toDateKey(pointDate);
+
+    const usersCount = players.filter((player) => {
+      const registered = parseProcessedAt(player.player.registeredInAppAt);
+      return registered && toDateKey(registered) === dateKey;
+    }).length;
+
+    let depositsAmount = 0;
+    let withdrawalsAmount = 0;
+
+    for (const item of transactions) {
+      for (const transaction of item.transactions) {
+        if (transaction.statusName !== "Одобрено") continue;
+        const processed = parseProcessedAt(transaction.processedAt);
+        if (!processed || toDateKey(processed) !== dateKey) continue;
+
+        if (transaction.typeName === "Пополнение") {
+          depositsAmount += transaction.amount;
+        } else if (transaction.typeName === "Вывод") {
+          withdrawalsAmount += transaction.amount;
+        }
+      }
+    }
+
+    return {
+      ...point,
+      usersCount,
+      depositsAmount,
+      withdrawalsAmount,
+      incomeAmount: depositsAmount - withdrawalsAmount,
+    };
+  });
+
+  return { ...timeline, points };
 }
