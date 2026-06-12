@@ -1,41 +1,97 @@
 import axios from "axios";
 import apiClient from "./axiosInstance";
 import { PlayerData } from "@/components/types";
+import {
+  filterPlayersBySearch,
+  invalidateBannedPlayersCache,
+} from "@/lib/exclude-banned";
 
 export type PlayersListParams = {
+  q?: string;
   telegramId?: number;
   name?: string;
 };
 
 function buildPlayersListUrl(params?: PlayersListParams): string {
-  if (!params) {
-    return "/Player/get-all-players";
-  }
-
   const searchParams = new URLSearchParams();
-  if (params.telegramId != null) {
-    searchParams.set("telegramId", String(params.telegramId));
-  }
-  if (params.name) {
-    searchParams.set("name", params.name);
+
+  if (params?.q) {
+    searchParams.set("q", params.q);
+  } else {
+    if (params?.telegramId != null) {
+      searchParams.set("telegramId", String(params.telegramId));
+    }
+    if (params?.name) {
+      searchParams.set("name", params.name);
+    }
   }
 
   const query = searchParams.toString();
   return query ? `/Player/get-all-players?${query}` : "/Player/get-all-players";
 }
 
+function normalizeSearchParams(params?: PlayersListParams): PlayersListParams | undefined {
+  if (!params) return undefined;
+
+  if (params.q?.trim()) {
+    return { q: params.q.trim().replace(/^@+/, "") };
+  }
+
+  if (params.telegramId != null) {
+    return { telegramId: params.telegramId };
+  }
+
+  if (params.name?.trim()) {
+    return { name: params.name.trim().replace(/^@+/, "") };
+  }
+
+  return undefined;
+}
+
 export const playersApi = {
   getPlayersList: async (
     params?: PlayersListParams,
   ): Promise<PlayerData[]> => {
+    const normalized = normalizeSearchParams(params);
+
     try {
       const response = await apiClient.get<PlayerData[]>(
-        buildPlayersListUrl(params),
+        buildPlayersListUrl(normalized),
+      );
+      const players = response.data ?? [];
+
+      if (normalized?.q) {
+        return filterPlayersBySearch(players, normalized.q);
+      }
+      if (normalized?.telegramId != null) {
+        return players.filter(
+          (player) => player.player.telegramId === normalized.telegramId,
+        );
+      }
+      if (normalized?.name) {
+        return filterPlayersBySearch(players, normalized.name);
+      }
+
+      return players;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return normalized ? [] : [];
+      }
+      throw error;
+    }
+  },
+  getActivelyBannedPlayerIds: async (): Promise<number[]> => {
+    try {
+      const response = await apiClient.get<number[]>(
+        "/Player/actively-banned-player-ids",
       );
       return response.data ?? [];
     } catch (error) {
-      if (axios.isAxiosError(error) && error.response?.status === 404) {
-        return params ? [] : [];
+      if (
+        axios.isAxiosError(error) &&
+        (error.response?.status === 404 || error.response?.status === 403)
+      ) {
+        return [];
       }
       throw error;
     }
@@ -45,12 +101,14 @@ export const playersApi = {
       playerId,
       banReason,
     });
+    invalidateBannedPlayersCache();
     return response.data;
   },
   unbanPlayer: async (playerId: number) => {
     const response = await apiClient.post(
       `/Player/unban-player/${playerId}`,
     );
+    invalidateBannedPlayersCache();
     return response.data;
   },
   getPlayersTop100: async (): Promise<PlayerData[]> => {
