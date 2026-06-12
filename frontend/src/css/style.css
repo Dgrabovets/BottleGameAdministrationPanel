@@ -256,9 +256,29 @@ span.flatpickr-weekday,
 
 .flatpickr-calendar.statistics-date-range-calendar .flatpickr-day.inRange,
 .flatpickr-calendar.statistics-date-range-calendar .flatpickr-day.prevMonthDay.inRange,
-.flatpickr-calendar.statistics-date-range-calendar .flatpickr-day.nextMonthDay.inRange {
+.flatpickr-calendar.statistics-date-range-calendar .flatpickr-day.nextMonthDay.inRange,
+.flatpickr-calendar.statistics-date-range-calendar .flatpickr-day.today.inRange {
   box-shadow: none !important;
-  @apply !rounded-none !border-transparent !bg-[#E8EEFF] dark:!bg-primary/25;
+  border-color: transparent !important;
+  border-radius: 0 !important;
+  background-color: #cdd9ff !important;
+  color: #1e293b !important;
+}
+
+.dark
+  .flatpickr-calendar.statistics-date-range-calendar
+  .flatpickr-day.inRange,
+.dark
+  .flatpickr-calendar.statistics-date-range-calendar
+  .flatpickr-day.prevMonthDay.inRange,
+.dark
+  .flatpickr-calendar.statistics-date-range-calendar
+  .flatpickr-day.nextMonthDay.inRange,
+.dark
+  .flatpickr-calendar.statistics-date-range-calendar
+  .flatpickr-day.today.inRange {
+  background-color: rgba(60, 80, 224, 0.28) !important;
+  color: #f8fafc !important;
 }
 
 .flatpickr-calendar.statistics-date-range-calendar .flatpickr-day.selected.startRange,
@@ -341,6 +361,49 @@ span.flatpickr-weekday,
 .flatpickr-day.startRange.startRange + .endRange:not(:nth-child(7n + 1)),
 .flatpickr-day.endRange.startRange + .endRange:not(:nth-child(7n + 1)) {
   box-shadow: -10px 0 0 #3c50e0;
+}
+
+/* statistics date range — перекрываем глобальные flatpickr-стили для дней внутри диапазона */
+.flatpickr-calendar.statistics-date-range-calendar .flatpickr-day.inRange,
+.flatpickr-calendar.statistics-date-range-calendar
+  .flatpickr-day.prevMonthDay.inRange,
+.flatpickr-calendar.statistics-date-range-calendar
+  .flatpickr-day.nextMonthDay.inRange,
+.flatpickr-calendar.statistics-date-range-calendar .flatpickr-day.today.inRange,
+.flatpickr-calendar.statistics-date-range-calendar .flatpickr-day.inRange:hover,
+.flatpickr-calendar.statistics-date-range-calendar .flatpickr-day.inRange:focus {
+  background-color: #cdd9ff !important;
+  border-color: transparent !important;
+  color: #1e293b !important;
+  box-shadow: none !important;
+}
+
+.dark .flatpickr-calendar.statistics-date-range-calendar .flatpickr-day.inRange,
+.dark
+  .flatpickr-calendar.statistics-date-range-calendar
+  .flatpickr-day.prevMonthDay.inRange,
+.dark
+  .flatpickr-calendar.statistics-date-range-calendar
+  .flatpickr-day.nextMonthDay.inRange,
+.dark
+  .flatpickr-calendar.statistics-date-range-calendar
+  .flatpickr-day.today.inRange,
+.dark
+  .flatpickr-calendar.statistics-date-range-calendar
+  .flatpickr-day.inRange:hover,
+.dark
+  .flatpickr-calendar.statistics-date-range-calendar
+  .flatpickr-day.inRange:focus {
+  background-color: rgba(60, 80, 224, 0.28) !important;
+  color: #f8fafc !important;
+}
+
+.flatpickr-calendar.statistics-date-range-calendar .flatpickr-day.startRange.inRange,
+.flatpickr-calendar.statistics-date-range-calendar .flatpickr-day.endRange.inRange,
+.flatpickr-calendar.statistics-date-range-calendar .flatpickr-day.selected.inRange {
+  background-color: #3c50e0 !important;
+  border-color: #3c50e0 !important;
+  color: #ffffff !important;
 }
 
 .map-btn .jvm-zoom-btn {
