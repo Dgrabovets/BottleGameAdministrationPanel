@@ -1,11 +1,14 @@
-import apiClient from "./axiosInstance"; // Импортируем apiClient
+import apiClient from "./axiosInstance";
+import { dedupeTransactionsList } from "@/lib/transactions";
+import type { PlayerTransactions } from "@/components/types";
 
 export const transactionsApi = {
-  getTransactionsList: async () => {
+  getTransactionsList: async (): Promise<PlayerTransactions[]> => {
     try {
-      const response = await apiClient.get("/Balance/get-all-transactions");
-      console.log("DEBUG API RESPONSE:", response.data);
-      return response.data;
+      const response = await apiClient.get<PlayerTransactions[]>(
+        "/Balance/get-all-transactions",
+      );
+      return dedupeTransactionsList(response.data ?? []);
     } catch (error) {
       console.error("Ошибка при получении данных:", error);
       throw error;

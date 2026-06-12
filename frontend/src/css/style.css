@@ -181,7 +181,26 @@ span.flatpickr-weekday,
 }
 
 .statistics-date-range .flatpickr-calendar {
-  @apply !rounded-xl !border !border-stroke dark:!border-dark-3;
+  @apply !z-50 !rounded-xl !border-2 !border-stroke !bg-white !shadow-2 dark:!border-dark-3 dark:!bg-gray-dark;
+}
+
+.statistics-date-range .flatpickr-day {
+  @apply select-none;
+}
+
+.statistics-date-range .flatpickr-day.flatpickr-disabled,
+.statistics-date-range .flatpickr-day.prevMonthDay,
+.statistics-date-range .flatpickr-day.nextMonthDay {
+  @apply !cursor-not-allowed !text-dark-5 dark:!text-dark-5;
+}
+
+.statistics-date-range .flatpickr-day.flatpickr-disabled {
+  @apply !opacity-35 dark:!opacity-50;
+}
+
+.statistics-date-range .flatpickr-day.prevMonthDay:not(.flatpickr-disabled),
+.statistics-date-range .flatpickr-day.nextMonthDay:not(.flatpickr-disabled) {
+  @apply !opacity-60;
 }
 
 .statistics-date-range .flatpickr-day.selected.startRange,

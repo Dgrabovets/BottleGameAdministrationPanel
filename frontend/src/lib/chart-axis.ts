@@ -11,7 +11,6 @@ export function formatAxisLabel(timestamp: number, bucket: string): string {
   if (bucket === "month") {
     return date.toLocaleDateString("ru-RU", {
       month: "short",
-      year: "2-digit",
     });
   }
 
@@ -42,10 +41,52 @@ export function formatTooltipDate(timestamp: number, bucket: string): string {
   });
 }
 
+function spansMultipleYears(timeline: StatisticsTimeline): boolean {
+  if (timeline.points.length === 0) return false;
+
+  const years = timeline.points.map(
+    (point) => new Date(point.date).getFullYear(),
+  );
+
+  return new Set(years).size > 1;
+}
+
+function buildYearBoundaryFormatter(timeline: StatisticsTimeline) {
+  const multiYear = spansMultipleYears(timeline);
+  const shownYears = new Set<number>();
+
+  return (value: string) => {
+    const date = new Date(Number(value));
+    const year = date.getFullYear();
+    const base = formatAxisLabel(Number(value), timeline.bucket);
+
+    if (timeline.bucket === "year") {
+      return String(year);
+    }
+
+    if (!multiYear) {
+      return base;
+    }
+
+    const isYearBoundary =
+      date.getMonth() === 0 &&
+      (timeline.bucket === "month" || date.getDate() <= 7);
+
+    if (!shownYears.has(year) || isYearBoundary) {
+      shownYears.add(year);
+      return `${base} ${year}`;
+    }
+
+    return base;
+  };
+}
+
 export function buildTimelineXAxisOptions(
   timeline: StatisticsTimeline,
   isMobile: boolean,
 ): ApexOptions["xaxis"] {
+  const formatter = buildYearBoundaryFormatter(timeline);
+
   return {
     type: "datetime",
     axisBorder: { show: false },
@@ -56,7 +97,7 @@ export function buildTimelineXAxisOptions(
       rotate: 0,
       datetimeUTC: false,
       style: { fontSize: "11px" },
-      formatter: (value) => formatAxisLabel(Number(value), timeline.bucket),
+      formatter,
     },
   };
 }
