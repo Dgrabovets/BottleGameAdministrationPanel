@@ -12,8 +12,10 @@ import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { getPlayerAvatarUrl } from "@/lib/player-avatar";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { PlayerData } from "@/components/types";
+
+const SEARCH_DEBOUNCE_MS = 400;
 
 function buildSearchParams(query: string): PlayersListParams | undefined {
   const trimmed = query.trim().replace(/^@+/, "");
@@ -35,39 +37,47 @@ export function Players() {
   const [banReason, setBanReason] = useState("");
   const [banError, setBanError] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
+  const requestIdRef = useRef(0);
 
   const loadPlayers = useCallback(async (params?: PlayersListParams) => {
+    const requestId = ++requestIdRef.current;
     setLoading(true);
+
     try {
       const response = await playersApi.getPlayersList(params);
+      if (requestId !== requestIdRef.current) return;
       setPlayers(response);
     } catch (err) {
+      if (requestId !== requestIdRef.current) return;
       console.error(err);
+      setPlayers([]);
     } finally {
-      setLoading(false);
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
-    loadPlayers();
-  }, [loadPlayers]);
+    const trimmed = searchQuery.trim();
 
-  const handleSearch = () => {
-    const params = buildSearchParams(searchQuery);
-    setActiveSearch(params);
-    loadPlayers(params);
-  };
-
-  const handleSearchKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter") {
-      handleSearch();
+    if (!trimmed) {
+      setActiveSearch(undefined);
+      loadPlayers();
+      return;
     }
-  };
+
+    const timer = window.setTimeout(() => {
+      const params = buildSearchParams(searchQuery);
+      setActiveSearch(params);
+      loadPlayers(params);
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => window.clearTimeout(timer);
+  }, [searchQuery, loadPlayers]);
 
   const handleClearSearch = () => {
     setSearchQuery("");
-    setActiveSearch(undefined);
-    loadPlayers();
   };
 
   const closeBanModal = () => {
@@ -137,28 +147,30 @@ export function Players() {
     }
   };
 
+  const isSearching = searchQuery.trim().length > 0;
+
   return (
     <div className="rounded-[10px] bg-white shadow-1 dark:bg-gray-dark dark:shadow-card">
       <div className="flex flex-col gap-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7 sm:py-5 xl:px-8.5">
         <h2 className="text-2xl font-bold text-dark dark:text-white">Игроки</h2>
 
         <div className="flex flex-wrap items-center gap-2">
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            onKeyDown={handleSearchKeyDown}
-            placeholder="Telegram ID или ник"
-            className="h-11 min-w-[200px] flex-1 rounded-lg border border-stroke bg-transparent px-4 text-sm text-dark outline-none focus:border-primary dark:border-dark-3 dark:text-white sm:max-w-xs"
-          />
-          <button
-            type="button"
-            onClick={handleSearch}
-            className="inline-flex h-11 shrink-0 select-none items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-white transition hover:bg-primary/90"
-          >
-            Найти
-          </button>
-          {activeSearch && (
+          <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Telegram ID или ник"
+              autoComplete="off"
+              className="h-11 w-full rounded-lg border border-stroke bg-transparent px-4 pr-10 text-sm text-dark outline-none focus:border-primary dark:border-dark-3 dark:text-white"
+            />
+            {loading && isSearching && (
+              <span className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-xs text-dark-6">
+                ...
+              </span>
+            )}
+          </div>
+          {isSearching && (
             <button
               type="button"
               onClick={handleClearSearch}
@@ -170,7 +182,7 @@ export function Players() {
         </div>
       </div>
 
-      {loading ? (
+      {loading && !isSearching ? (
         <div className="px-6 py-8 text-center text-dark-6">Загрузка...</div>
       ) : (
         <Table>
@@ -190,7 +202,13 @@ export function Players() {
           </TableHeader>
 
           <TableBody>
-            {players.length === 0 ? (
+            {loading && isSearching ? (
+              <TableRow>
+                <TableCell colSpan={6} className="py-8 text-center text-dark-6">
+                  Поиск...
+                </TableCell>
+              </TableRow>
+            ) : players.length === 0 ? (
               <TableRow>
                 <TableCell
                   colSpan={6}
