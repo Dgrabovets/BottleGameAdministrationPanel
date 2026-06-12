@@ -3,19 +3,30 @@ import type { SVGProps } from "react";
 type SVGPropsType = SVGProps<SVGSVGElement>;
 
 export function Wallet(props: SVGPropsType) {
+  return <TreasureChest {...props} />;
+}
+
+export function TreasureChest(props: SVGPropsType) {
   return (
     <svg width={58} height={58} viewBox="0 0 58 58" fill="none" {...props}>
       <circle cx={29} cy={29} r={29} fill="#3FD97F" />
       <path
-        d="M18 24.5c0-2.21 1.79-4 4-4h14c2.21 0 4 1.79 4 4v2.25H22c-1.38 0-2.5 1.12-2.5 2.5V33c0 1.38 1.12 2.5 2.5 2.5h18V37.5c0 2.21-1.79 4-4 4H22c-2.21 0-4-1.79-4-4v-9z"
+        d="M17 28.5c0-2.49 2.01-4.5 4.5-4.5h15c2.49 0 4.5 2.01 4.5 4.5V31H17v-2.5z"
         fill="#fff"
       />
       <path
-        d="M24 20.5h10c1.66 0 3 1.34 3 3v.5H21v-.5c0-1.66 1.34-3 3-3z"
+        d="M21.5 24h15c1.38 0 2.5 1.12 2.5 2.5v1h-20v-1c0-1.38 1.12-2.5 2.5-2.5z"
         fill="#fff"
         fillOpacity={0.85}
       />
-      <circle cx={36.5} cy={33} r={2} fill="#3FD97F" />
+      <rect x={17} y={31} width={24} height={10} rx={2} fill="#fff" />
+      <path
+        d="M29 31v10M23 36h12"
+        stroke="#3FD97F"
+        strokeWidth={2}
+        strokeLinecap="round"
+      />
+      <circle cx={29} cy={28.5} r={2.25} fill="#3FD97F" stroke="#fff" strokeWidth={1.5} />
     </svg>
   );
 }
@@ -71,16 +82,16 @@ export function PendingWithdrawals(props: SVGPropsType) {
   return (
     <svg width={58} height={58} viewBox="0 0 58 58" fill="none" {...props}>
       <circle cx={29} cy={29} r={29} fill="#F59E0B" />
+      <circle cx={29} cy={28} r={9} stroke="#fff" strokeWidth={2.5} />
       <path
-        d="M29 18v6l4 2"
+        d="M29 22.5v5.5l3.5 2"
         stroke="#fff"
         strokeWidth={2.5}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
-      <circle cx={29} cy={29} r={9} stroke="#fff" strokeWidth={2.5} />
       <path
-        d="M22 38h14"
+        d="M21 39h16"
         stroke="#fff"
         strokeWidth={2.5}
         strokeLinecap="round"

@@ -72,8 +72,11 @@ export function Deposits() {
         </TableHeader>
 
         <TableBody>
-          {formattedData.map((item, index) => (
-            <TableRow key={index} className="border-[#eee] dark:border-dark-3">
+          {formattedData.map((item) => (
+            <TableRow
+              key={item.transactionId}
+              className="border-[#eee] dark:border-dark-3"
+            >
               <TableCell className="flex min-w-fit items-center gap-3">
                 <PlayerAvatar
                   src={item.playerAvatar}

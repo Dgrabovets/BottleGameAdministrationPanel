@@ -4,13 +4,36 @@ import { settingsApi } from "@/api/settingsApi";
 import { formatDateParam, getDefaultPeriod } from "@/lib/date-range";
 import { compactFormat, formatRub } from "@/lib/format-number";
 import type { AppStatistics, DateRange, StatisticsTimeline } from "@/lib/statistics-types";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DateRangeFilter } from "./date-range-filter";
 import * as icons from "./overview-cards/icons";
 import { OverviewCardsRow } from "./overview-cards/overview-cards-row";
 import { OverviewCardsSkeleton } from "./overview-cards/skeleton";
 import { StatisticsCharts } from "./statistics-charts";
 import { StatisticsSection } from "./statistics-section";
+
+const POLL_INTERVAL_MS = 5_000;
+
+function extractErrorMessage(error: unknown, fallback: string): string {
+  if (
+    error &&
+    typeof error === "object" &&
+    "response" in error &&
+    error.response &&
+    typeof error.response === "object" &&
+    "data" in error.response
+  ) {
+    const data = error.response.data;
+    if (typeof data === "string" && data.length > 0) return data;
+    if (data && typeof data === "object") {
+      const message = (data as Record<string, unknown>).message
+        ?? (data as Record<string, unknown>).title
+        ?? (data as Record<string, unknown>).error;
+      if (typeof message === "string" && message.length > 0) return message;
+    }
+  }
+  return fallback;
+}
 
 export function DashboardStatistics() {
   const [generalStats, setGeneralStats] = useState<AppStatistics | null>(null);
@@ -20,60 +43,82 @@ export function DashboardStatistics() {
   const [draftRange, setDraftRange] = useState<DateRange>(getDefaultPeriod);
   const [appliedRange, setAppliedRange] = useState<DateRange>(getDefaultPeriod);
 
-  const [generalLoading, setGeneralLoading] = useState(true);
+  const [initialLoading, setInitialLoading] = useState(true);
   const [periodLoading, setPeriodLoading] = useState(true);
   const [generalError, setGeneralError] = useState<string | null>(null);
   const [periodError, setPeriodError] = useState<string | null>(null);
+  const hasLoadedOnceRef = useRef(false);
+
+  const loadStatistics = useCallback(
+    async (range: DateRange, options?: { silent?: boolean }) => {
+      const silent = options?.silent ?? false;
+
+      if (!silent) {
+        setPeriodLoading(true);
+        if (!hasLoadedOnceRef.current) {
+          setInitialLoading(true);
+        }
+      }
+
+      setGeneralError(null);
+      setPeriodError(null);
+
+      const params = {
+        dateFrom: formatDateParam(range.from),
+        dateTill: formatDateParam(range.till),
+      };
+
+      try {
+        const [general, period, timelineData] = await Promise.all([
+          settingsApi.getStatistics(),
+          settingsApi.getStatistics(params),
+          settingsApi.getStatisticsTimeline(params),
+        ]);
+
+        setGeneralStats(general);
+        setPeriodStats(period);
+        setTimeline(timelineData);
+      } catch (error) {
+        const message = extractErrorMessage(
+          error,
+          "Не удалось загрузить статистику",
+        );
+        setGeneralError(message);
+        setPeriodError(message);
+        if (!silent) {
+          setPeriodStats(null);
+          setTimeline(null);
+        }
+      } finally {
+        hasLoadedOnceRef.current = true;
+        if (!silent) {
+          setPeriodLoading(false);
+          setInitialLoading(false);
+        }
+      }
+    },
+    [],
+  );
 
   useEffect(() => {
     let cancelled = false;
 
-    async function loadGeneral() {
-      setGeneralLoading(true);
-      setGeneralError(null);
-      try {
-        const stats = await settingsApi.getStatistics();
-        if (!cancelled) setGeneralStats(stats);
-      } catch {
-        if (!cancelled) setGeneralError("Не удалось загрузить общую статистику");
-      } finally {
-        if (!cancelled) setGeneralLoading(false);
-      }
-    }
+    const run = async (silent: boolean) => {
+      if (cancelled) return;
+      await loadStatistics(appliedRange, { silent });
+    };
 
-    loadGeneral();
+    run(false);
+
+    const intervalId = window.setInterval(() => {
+      run(true);
+    }, POLL_INTERVAL_MS);
+
     return () => {
       cancelled = true;
+      window.clearInterval(intervalId);
     };
-  }, []);
-
-  const loadPeriodData = useCallback(async (range: DateRange) => {
-    setPeriodLoading(true);
-    setPeriodError(null);
-    const params = {
-      dateFrom: formatDateParam(range.from),
-      dateTill: formatDateParam(range.till),
-    };
-
-    try {
-      const [stats, timelineData] = await Promise.all([
-        settingsApi.getStatistics(params),
-        settingsApi.getStatisticsTimeline(params),
-      ]);
-      setPeriodStats(stats);
-      setTimeline(timelineData);
-    } catch {
-      setPeriodError("Не удалось загрузить статистику за период");
-      setPeriodStats(null);
-      setTimeline(null);
-    } finally {
-      setPeriodLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    loadPeriodData(appliedRange);
-  }, [appliedRange, loadPeriodData]);
+  }, [appliedRange, loadStatistics]);
 
   const applyRange = useCallback((range: DateRange) => {
     setDraftRange(range);
@@ -90,7 +135,7 @@ export function DashboardStatistics() {
       {
         label: "Суммарный баланс игроков",
         value: formatRub(generalStats.balancesTotal ?? 0, true),
-        Icon: icons.Wallet,
+        Icon: icons.TreasureChest,
       },
       {
         label: "Доход",
@@ -139,7 +184,7 @@ export function DashboardStatistics() {
   return (
     <div className="space-y-6 md:space-y-8">
       <StatisticsSection title="Общая статистика">
-        {generalLoading ? (
+        {initialLoading ? (
           <OverviewCardsSkeleton
             count={5}
             columnsClassName="sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
@@ -156,7 +201,7 @@ export function DashboardStatistics() {
 
       <StatisticsSection
         title="Статистика во времени"
-        footer="Обновляется по выбранному периоду"
+        footer="Обновляется каждые 5 секунд по выбранному периоду"
       >
         <DateRangeFilter
           value={draftRange}

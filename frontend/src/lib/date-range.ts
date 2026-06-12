@@ -25,6 +25,9 @@ export function getPresetPeriod(days: number): DateRange {
 
 export function formatChartDate(isoDate: string, bucket: string): string {
   const date = new Date(isoDate);
+  if (bucket === "year") {
+    return date.getFullYear().toString();
+  }
   if (bucket === "month") {
     return date.toLocaleDateString("ru-RU", { month: "short", year: "2-digit" });
   }
