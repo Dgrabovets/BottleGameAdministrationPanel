@@ -1,6 +1,6 @@
 import apiClient from "@/api/axiosInstance";
 import { dedupeTransactionsList } from "@/lib/transactions";
-import type { AppStatistics, StatisticsTimeline } from "@/lib/statistics-types";
+import type { AppStatistics } from "@/lib/statistics-types";
 import type { PlayerData, PlayerTransactions } from "@/components/types";
 
 const BANNED_IDS_STORAGE_KEY = "bottle_admin_banned_player_ids";
@@ -95,6 +95,21 @@ export function filterTransactionsByBannedIds(
 ): PlayerTransactions[] {
   if (bannedIds.size === 0) return data;
   return data.filter((item) => !bannedIds.has(item.player.id));
+}
+
+export function filterNonBannedPlayersForDefaultList(
+  players: PlayerData[],
+  isSearch: boolean,
+): PlayerData[] {
+  if (isSearch) {
+    return players;
+  }
+
+  const storedBanned = readStoredBannedIds();
+  return players.filter(
+    (player) =>
+      player.bannedAt == null && !storedBanned.has(player.player.id),
+  );
 }
 
 export function filterPlayersBySearch(
@@ -205,58 +220,4 @@ export function recalculateStatisticsExcludingBanned(
       : players.reduce((sum, player) => sum + player.balance, 0),
     pendingWithdrawalsTotal: params ? undefined : pendingWithdrawals,
   };
-}
-
-function toDateKey(value: Date): string {
-  return value.toISOString().slice(0, 10);
-}
-
-export function recalculateTimelineExcludingBanned(
-  timeline: StatisticsTimeline,
-  transactions: PlayerTransactions[],
-  players: PlayerData[],
-): StatisticsTimeline {
-  const from = new Date(`${timeline.dateFrom}T00:00:00.000Z`);
-  const till = new Date(`${timeline.dateTill}T23:59:59.999Z`);
-
-  const points = timeline.points.map((point) => {
-    const pointDate = parseProcessedAt(point.date);
-    if (!pointDate) {
-      return { ...point, usersCount: 0, depositsAmount: 0, withdrawalsAmount: 0, incomeAmount: 0 };
-    }
-
-    const dateKey = toDateKey(pointDate);
-
-    const usersCount = players.filter((player) => {
-      const registered = parseProcessedAt(player.player.registeredInAppAt);
-      return registered && toDateKey(registered) === dateKey;
-    }).length;
-
-    let depositsAmount = 0;
-    let withdrawalsAmount = 0;
-
-    for (const item of transactions) {
-      for (const transaction of item.transactions) {
-        if (transaction.statusName !== "Одобрено") continue;
-        const processed = parseProcessedAt(transaction.processedAt);
-        if (!processed || toDateKey(processed) !== dateKey) continue;
-
-        if (transaction.typeName === "Пополнение") {
-          depositsAmount += transaction.amount;
-        } else if (transaction.typeName === "Вывод") {
-          withdrawalsAmount += transaction.amount;
-        }
-      }
-    }
-
-    return {
-      ...point,
-      usersCount,
-      depositsAmount,
-      withdrawalsAmount,
-      incomeAmount: depositsAmount - withdrawalsAmount,
-    };
-  });
-
-  return { ...timeline, points };
 }

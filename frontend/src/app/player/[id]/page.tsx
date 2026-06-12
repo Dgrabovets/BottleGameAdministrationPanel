@@ -5,7 +5,7 @@ import { ShowcaseSection } from "@/components/Layouts/showcase-section";
 import PlayerRounds from "./_components/player-rounds";
 import InputGroup from "@/components/FormElements/InputGroup";
 import { UserIcon } from "@/assets/icons";
-import { PlayerData, Transaction } from "@/components/types";
+import { PlayerData } from "@/components/types";
 import { useSession } from "@/hooks/use-session";
 import { useCallback, useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
@@ -24,7 +24,10 @@ export default function SettingsPage() {
   const [balance, setBalance] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [winChance, setWinChance] = useState<number>(0);
-  const [unbanLoading, setUnbanLoading] = useState(false);
+  const [moderationLoading, setModerationLoading] = useState(false);
+  const [showBanModal, setShowBanModal] = useState(false);
+  const [banReason, setBanReason] = useState("");
+  const [banError, setBanError] = useState<string | null>(null);
   const { session } = useSession();
   const userRole = session?.role ?? null;
 
@@ -78,20 +81,6 @@ export default function SettingsPage() {
     }
   };
 
-  const onUnban = async () => {
-    if (!idNumber) return;
-
-    setUnbanLoading(true);
-    try {
-      await playersApi.unbanPlayer(idNumber);
-      await loadPlayer();
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setUnbanLoading(false);
-    }
-  };
-
   const onBalanceUpdate = async () => {
     try {
       if (idNumber) {
@@ -107,20 +96,71 @@ export default function SettingsPage() {
     }
   };
 
+  const closeBanModal = () => {
+    setShowBanModal(false);
+    setBanReason("");
+    setBanError(null);
+  };
+
+  const onBanSubmit = async () => {
+    if (!idNumber) return;
+
+    const reason = banReason.trim();
+    if (!reason) {
+      setBanError("Укажите причину бана");
+      return;
+    }
+    if (reason.length > 255) {
+      setBanError("Причина не должна превышать 255 символов");
+      return;
+    }
+
+    setModerationLoading(true);
+    setBanError(null);
+    try {
+      await playersApi.banPlayer(idNumber, reason);
+      closeBanModal();
+      await loadPlayer();
+    } catch (err) {
+      console.error(err);
+      setBanError("Не удалось забанить игрока");
+    } finally {
+      setModerationLoading(false);
+    }
+  };
+
+  const onUnban = async () => {
+    if (!idNumber) return;
+
+    setModerationLoading(true);
+    try {
+      await playersApi.unbanPlayer(idNumber);
+      await loadPlayer();
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setModerationLoading(false);
+    }
+  };
+
   if (!data) {
     return <div></div>;
   }
 
   const isDisabled = userRole !== "Admin";
+  const isBanned = data.bannedAt != null;
 
   return (
     <div className="mx-auto w-full max-w-[1080px]">
       <Breadcrumb pageName={`Пользователь №${id}`} />
 
-      <div className="grid grid-cols-5 gap-8">
-        <div className="col-span-5 xl:col-span-3">
-          <ShowcaseSection title="Информация пользователя" className="!p-7">
-            <form>
+      <div className="grid grid-cols-5 gap-8 xl:items-stretch">
+        <div className="col-span-5 flex xl:col-span-3">
+          <ShowcaseSection
+            title="Информация пользователя"
+            className="!p-7 flex w-full flex-col"
+          >
+            <form className="flex flex-1 flex-col">
               <div className="mb-5.5 flex flex-col gap-5.5 sm:flex-row">
                 <InputGroup
                   className="w-full sm:w-1/2"
@@ -160,7 +200,7 @@ export default function SettingsPage() {
                   height="sm"
                 />
               </div>
-              <div className="flex justify-end gap-3">
+              <div className="mt-auto flex justify-end gap-3">
                 {!isDisabled && (
                   <button
                     className="rounded-lg bg-primary px-6 py-[7px] font-medium text-gray-2 hover:bg-opacity-90"
@@ -174,9 +214,13 @@ export default function SettingsPage() {
             </form>
           </ShowcaseSection>
         </div>
+
         <div className="col-span-5 flex flex-col gap-8 xl:col-span-2">
-          <ShowcaseSection title="Баланс" className="!p-7">
-            <div className="mb-5.5">
+          <ShowcaseSection
+            title="Баланс"
+            className="!p-7 flex flex-1 flex-col"
+          >
+            <div className="mb-5.5 flex-1">
               <InputGroup
                 className="w-full"
                 type="number"
@@ -190,7 +234,7 @@ export default function SettingsPage() {
               />
             </div>
             {!isDisabled && (
-              <div className="flex justify-end">
+              <div className="mt-auto flex justify-end">
                 <button
                   className="rounded-lg bg-primary px-6 py-[7px] font-medium text-gray-2 hover:bg-opacity-90"
                   type="button"
@@ -202,41 +246,123 @@ export default function SettingsPage() {
             )}
           </ShowcaseSection>
 
-          {data.bannedAt && !isDisabled && (
-            <ShowcaseSection title="Модерация" className="!p-7">
-              <div className="mb-4 flex items-center gap-2">
-                <span className="rounded-full bg-[#D34053]/[0.08] px-3 py-1 text-sm font-medium text-[#D34053]">
-                  Забанен
-                </span>
-                <span className="text-sm text-dark-6">
-                  с{" "}
-                  {new Date(data.bannedAt).toLocaleDateString("ru-RU", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "numeric",
-                  })}
-                </span>
-              </div>
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={onUnban}
-                  disabled={unbanLoading}
-                  className={cn(
-                    "inline-flex h-10 items-center justify-center rounded-lg border border-[#219653] px-6 text-sm font-semibold text-[#219653] transition hover:bg-[#219653]/[0.08]",
-                    unbanLoading && "cursor-not-allowed opacity-50",
+          {!isDisabled && (
+            <ShowcaseSection
+              title="Модерация"
+              className="!p-7 flex flex-1 flex-col justify-center"
+            >
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap items-center gap-2">
+                  {isBanned ? (
+                    <>
+                      <span className="rounded-full bg-[#D34053]/[0.08] px-3 py-1 text-sm font-medium text-[#D34053]">
+                        Забанен
+                      </span>
+                      <span className="text-sm text-dark-6">
+                        с{" "}
+                        {new Date(data.bannedAt!).toLocaleDateString("ru-RU", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
+                        })}
+                      </span>
+                    </>
+                  ) : (
+                    <span className="text-sm text-dark-6">Статус: активен</span>
                   )}
-                >
-                  Разбанить
-                </button>
+                </div>
+
+                {isBanned ? (
+                  <button
+                    type="button"
+                    onClick={onUnban}
+                    disabled={moderationLoading}
+                    className={cn(
+                      "inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-[#219653] px-4 text-sm font-medium text-[#219653] transition hover:bg-[#219653]/[0.08]",
+                      moderationLoading && "cursor-not-allowed opacity-50",
+                    )}
+                  >
+                    Разбанить
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowBanModal(true);
+                      setBanReason("");
+                      setBanError(null);
+                    }}
+                    disabled={moderationLoading}
+                    className={cn(
+                      "inline-flex h-9 shrink-0 items-center justify-center rounded-lg border border-[#D34053] px-4 text-sm font-medium text-[#D34053] transition hover:bg-[#D34053]/[0.08]",
+                      moderationLoading && "cursor-not-allowed opacity-50",
+                    )}
+                  >
+                    Забанить
+                  </button>
+                )}
               </div>
             </ShowcaseSection>
           )}
         </div>
       </div>
+
       <PlayerRounds data={data} />
       {transactionsData && <PlayerTransactions data={transactionsData} />}
       <PlayerRefferal data={data} />
+
+      {showBanModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div
+            className="w-full max-w-md rounded-[10px] bg-white p-6 shadow-1 dark:bg-gray-dark"
+            role="dialog"
+            aria-labelledby="ban-dialog-title"
+          >
+            <h3
+              id="ban-dialog-title"
+              className="mb-1 text-lg font-bold text-dark dark:text-white"
+            >
+              Забанить игрока
+            </h3>
+            <p className="mb-4 text-sm text-dark-6">
+              {data.player.name} (ID {data.player.telegramId})
+            </p>
+
+            <label className="mb-2 block text-sm font-medium text-dark dark:text-white">
+              Причина бана
+            </label>
+            <textarea
+              value={banReason}
+              onChange={(e) => setBanReason(e.target.value)}
+              rows={3}
+              maxLength={255}
+              className="mb-2 w-full rounded-lg border border-stroke bg-transparent px-4 py-2 text-sm text-dark outline-none focus:border-primary dark:border-dark-3 dark:text-white"
+              placeholder="Опишите причину"
+            />
+            {banError && (
+              <p className="mb-3 text-sm text-[#D34053]">{banError}</p>
+            )}
+
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={closeBanModal}
+                className="inline-flex h-10 items-center justify-center rounded-lg border border-stroke px-4 text-sm font-medium text-dark transition hover:bg-gray-2 dark:border-dark-3 dark:text-white"
+              >
+                Отмена
+              </button>
+              <button
+                type="button"
+                onClick={onBanSubmit}
+                disabled={moderationLoading}
+                className="inline-flex h-10 items-center justify-center rounded-lg bg-[#D34053] px-4 text-sm font-semibold text-white transition hover:bg-[#D34053]/90 disabled:opacity-50"
+              >
+                Забанить
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
