@@ -15,7 +15,11 @@ type Props = {
 };
 
 const INPUT_HEIGHT_CLASS =
-  "h-11 rounded-lg border border-stroke bg-transparent px-4 text-sm text-dark outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white";
+  "h-11 select-none rounded-lg border border-stroke bg-transparent px-4 text-sm text-dark outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white";
+
+function rangeKey(range: DateRange): string {
+  return `${formatDateParam(range.from)}_${formatDateParam(range.till)}`;
+}
 
 export function DateRangeFilter({
   value,
@@ -25,6 +29,8 @@ export function DateRangeFilter({
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const pickerRef = useRef<flatpickr.Instance | null>(null);
+  const syncedKeyRef = useRef(rangeKey(value));
+  const skipNextSyncRef = useRef(false);
 
   useEffect(() => {
     if (!inputRef.current) return;
@@ -33,17 +39,21 @@ export function DateRangeFilter({
       mode: "range",
       locale: Russian,
       showMonths: 2,
+      static: false,
+      appendTo: inputRef.current.parentElement ?? undefined,
       monthSelectorType: "dropdown",
       dateFormat: "d.m.Y",
       maxDate: "today",
       defaultDate: [value.from, value.till],
       onChange: (selectedDates) => {
-        if (selectedDates.length === 0) return;
+        if (selectedDates.length < 2) return;
 
-        const from = selectedDates[0];
-        const till = selectedDates[1] ?? selectedDates[0];
+        const from = new Date(selectedDates[0]);
+        const till = new Date(selectedDates[1]);
         from.setHours(0, 0, 0, 0);
         till.setHours(0, 0, 0, 0);
+
+        skipNextSyncRef.current = true;
         onChange({ from, till });
       },
     });
@@ -56,8 +66,18 @@ export function DateRangeFilter({
   }, []);
 
   useEffect(() => {
+    const nextKey = rangeKey(value);
+    if (skipNextSyncRef.current) {
+      skipNextSyncRef.current = false;
+      syncedKeyRef.current = nextKey;
+      return;
+    }
+
+    if (syncedKeyRef.current === nextKey) return;
+
+    syncedKeyRef.current = nextKey;
     pickerRef.current?.setDate([value.from, value.till], false);
-  }, [value.from, value.till]);
+  }, [value]);
 
   const applyPreset = (days: number) => {
     const range = getPresetPeriod(days);
@@ -90,7 +110,7 @@ export function DateRangeFilter({
         <button
           type="button"
           onClick={onApply}
-          className="inline-flex h-11 shrink-0 items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-white transition hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="inline-flex h-11 shrink-0 select-none items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-white transition hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
           Применить
         </button>
