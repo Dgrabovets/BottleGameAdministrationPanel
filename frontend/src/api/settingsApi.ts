@@ -1,5 +1,11 @@
 import apiClient from "./axiosInstance";
+import { playersApi } from "@/api/playersApi";
+import { transactionsApi } from "@/api/transactionsApi";
 import { GameSettings } from "@/components/types";
+import {
+  fetchActivelyBannedPlayerIds,
+  recalculateStatisticsExcludingBanned,
+} from "@/lib/exclude-banned";
 import type {
   AppStatistics,
   StatisticsTimeline,
@@ -58,6 +64,46 @@ function normalizeTimeline(data: Record<string, unknown>): StatisticsTimeline {
   };
 }
 
+async function applyBannedExclusion(
+  stats: AppStatistics,
+  params?: StatisticsParams,
+): Promise<AppStatistics> {
+  const bannedIds = await fetchActivelyBannedPlayerIds(() =>
+    playersApi.getActivelyBannedPlayerIds(),
+  );
+
+  if (bannedIds.size === 0) {
+    return stats;
+  }
+
+  const [players, transactions] = await Promise.all([
+    playersApi.getPlayersList(),
+    transactionsApi.getTransactionsList(),
+  ]);
+
+  const recalculated = recalculateStatisticsExcludingBanned(
+    transactions,
+    players,
+    params,
+  );
+
+  return {
+    ...stats,
+    usersTotal: recalculated.usersTotal,
+    depositsTotal: recalculated.depositsTotal,
+    withdrawalsTotal: recalculated.withdrawalsTotal,
+    incomeTotal: recalculated.incomeTotal,
+    balancesTotal:
+      recalculated.balancesTotal !== undefined
+        ? recalculated.balancesTotal
+        : stats.balancesTotal,
+    pendingWithdrawalsTotal:
+      recalculated.pendingWithdrawalsTotal !== undefined
+        ? recalculated.pendingWithdrawalsTotal
+        : stats.pendingWithdrawalsTotal,
+  };
+}
+
 export const settingsApi = {
   getSettingsList: async () => {
     const response = await apiClient.get<GameSettings>(
@@ -77,7 +123,6 @@ export const settingsApi = {
       const response = await apiClient.post("/admin/update-threshold", {
         LowerThreshold: lowerThreshold,
       });
-      console.log("DEBUG THRESHOLD RESPONSE:", response.data);
       return response.data;
     } catch (error) {
       console.error("Ошибка при обновлении порога:", error);
@@ -86,7 +131,8 @@ export const settingsApi = {
   },
   getStatistics: async (params?: StatisticsParams): Promise<AppStatistics> => {
     const response = await apiClient.get("/Admin/get-statistics", { params });
-    return normalizeStatistics(response.data);
+    const stats = normalizeStatistics(response.data);
+    return applyBannedExclusion(stats, params);
   },
   getStatisticsTimeline: async (
     params: StatisticsParams,

@@ -20,12 +20,7 @@ const SEARCH_DEBOUNCE_MS = 400;
 function buildSearchParams(query: string): PlayersListParams | undefined {
   const trimmed = query.trim().replace(/^@+/, "");
   if (!trimmed) return undefined;
-
-  if (/^\d+$/.test(trimmed)) {
-    return { telegramId: Number(trimmed) };
-  }
-
-  return { name: trimmed };
+  return { q: trimmed };
 }
 
 export function Players() {

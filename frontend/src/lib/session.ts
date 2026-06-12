@@ -10,7 +10,7 @@ export function getBackendApiUrl(): string {
   const url =
     process.env.INTERNAL_API_URL ||
     process.env.NEXT_PUBLIC_API_URL ||
-    "https://admin.bottledevadmin.ru/api";
+    "https://api.bottledevadmin.ru/api";
 
   return url.replace(/\/$/, "");
 }
