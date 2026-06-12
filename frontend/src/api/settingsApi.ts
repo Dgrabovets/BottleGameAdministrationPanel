@@ -5,7 +5,6 @@ import {
   filterTransactionsByBannedIds,
   loadRawTransactionsList,
   recalculateStatisticsExcludingBanned,
-  recalculateTimelineExcludingBanned,
   resolveBannedPlayerIdsFromData,
 } from "@/lib/exclude-banned";
 import type {
@@ -155,20 +154,7 @@ export const settingsApi = {
     const response = await apiClient.get("/Admin/get-statistics-timeline", {
       params,
     });
-    const timeline = normalizeTimeline(response.data);
-
-    const { activePlayers, transactions, bannedIds } =
-      await loadBannedAwareData();
-
-    if (bannedIds.size === 0) {
-      return timeline;
-    }
-
-    return recalculateTimelineExcludingBanned(
-      timeline,
-      transactions,
-      activePlayers,
-    );
+    return normalizeTimeline(response.data);
   },
   getAppBalance: async () => {
     const response = await apiClient.get("/Admin/get-app-balance");

@@ -2,6 +2,7 @@ import axios from "axios";
 import apiClient from "./axiosInstance";
 import { PlayerData } from "@/components/types";
 import {
+  filterNonBannedPlayersForDefaultList,
   filterPlayersBySearch,
   forgetBannedPlayerId,
   rememberBannedPlayerId,
@@ -61,19 +62,19 @@ export const playersApi = {
       );
       const players = response.data ?? [];
 
+      let result = players;
+
       if (normalized?.q) {
-        return filterPlayersBySearch(players, normalized.q);
-      }
-      if (normalized?.telegramId != null) {
-        return players.filter(
+        result = filterPlayersBySearch(players, normalized.q);
+      } else if (normalized?.telegramId != null) {
+        result = players.filter(
           (player) => player.player.telegramId === normalized.telegramId,
         );
-      }
-      if (normalized?.name) {
-        return filterPlayersBySearch(players, normalized.name);
+      } else if (normalized?.name) {
+        result = filterPlayersBySearch(players, normalized.name);
       }
 
-      return players;
+      return filterNonBannedPlayersForDefaultList(result, normalized != null);
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 404) {
         return normalized ? [] : [];
@@ -100,7 +101,7 @@ export const playersApi = {
     const response = await apiClient.get<PlayerData[]>(
       "/Player/get-top100-players",
     );
-    return response.data;
+    return filterNonBannedPlayersForDefaultList(response.data ?? [], false);
   },
   getPlayerDetails: async (playerId: Number): Promise<PlayerData> => {
     const response = await apiClient.get<PlayerData>(
