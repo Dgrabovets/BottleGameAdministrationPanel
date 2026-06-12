@@ -3,7 +3,8 @@ import apiClient from "./axiosInstance";
 import { PlayerData } from "@/components/types";
 import {
   filterPlayersBySearch,
-  invalidateBannedPlayersCache,
+  forgetBannedPlayerId,
+  rememberBannedPlayerId,
 } from "@/lib/exclude-banned";
 
 export type PlayersListParams = {
@@ -80,35 +81,19 @@ export const playersApi = {
       throw error;
     }
   },
-  getActivelyBannedPlayerIds: async (): Promise<number[]> => {
-    try {
-      const response = await apiClient.get<number[]>(
-        "/Player/actively-banned-player-ids",
-      );
-      return response.data ?? [];
-    } catch (error) {
-      if (
-        axios.isAxiosError(error) &&
-        (error.response?.status === 404 || error.response?.status === 403)
-      ) {
-        return [];
-      }
-      throw error;
-    }
-  },
   banPlayer: async (playerId: number, banReason: string) => {
     const response = await apiClient.post("/Player/ban-player", {
       playerId,
       banReason,
     });
-    invalidateBannedPlayersCache();
+    rememberBannedPlayerId(playerId);
     return response.data;
   },
   unbanPlayer: async (playerId: number) => {
     const response = await apiClient.post(
       `/Player/unban-player/${playerId}`,
     );
-    invalidateBannedPlayersCache();
+    forgetBannedPlayerId(playerId);
     return response.data;
   },
   getPlayersTop100: async (): Promise<PlayerData[]> => {
