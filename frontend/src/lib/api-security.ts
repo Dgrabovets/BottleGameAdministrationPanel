@@ -9,6 +9,7 @@ const ALLOWED_BACKEND_PATH_PATTERNS: RegExp[] = [
   /^Balance\/get-player-transactions\/\d+$/,
   /^Balance\/update-transaction-status\/\d+$/,
   /^Admin\/get-statistics$/,
+  /^Admin\/get-statistics-timeline$/,
   /^Admin\/get-app-balance$/,
   /^Admin\/get-moderators$/,
   /^Admin\/moderator-register$/,

@@ -1,9 +1,19 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function OverviewCardsSkeleton() {
+type Props = {
+  count?: number;
+  columnsClassName?: string;
+};
+
+export function OverviewCardsSkeleton({
+  count = 4,
+  columnsClassName = "sm:grid-cols-2 xl:grid-cols-4",
+}: Props) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 sm:gap-6 xl:grid-cols-4 2xl:gap-7.5">
-      {Array.from({ length: 4 }).map((_, i) => (
+    <div
+      className={`grid gap-4 sm:gap-6 2xl:gap-7.5 ${columnsClassName}`}
+    >
+      {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
           className="rounded-[10px] bg-white p-6 shadow-1 dark:bg-gray-dark"
