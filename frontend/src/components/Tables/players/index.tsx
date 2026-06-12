@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PlayerData } from "@/components/types";
+import { ModalOverlay } from "@/components/ui/modal-overlay";
 
 const SEARCH_DEBOUNCE_MS = 400;
 
@@ -303,7 +304,7 @@ export function Players() {
       )}
 
       {banTarget && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <ModalOverlay>
           <div
             className="w-full max-w-md rounded-[10px] bg-white p-6 shadow-1 dark:bg-gray-dark"
             role="dialog"
@@ -352,7 +353,7 @@ export function Players() {
               </button>
             </div>
           </div>
-        </div>
+        </ModalOverlay>
       )}
     </div>
   );
