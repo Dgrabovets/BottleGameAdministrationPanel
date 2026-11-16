@@ -3,6 +3,7 @@ import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { Moon, Sun } from "./icons";
 
+/** Available color themes with their icons */
 const THEMES = [
   {
     name: "light",
@@ -14,6 +15,7 @@ const THEMES = [
   },
 ];
 
+/** Switch between the light and dark themes */
 export function ThemeToggleSwitch() {
   const { setTheme, theme } = useTheme();
   const [mounted, setMounted] = useState(false);

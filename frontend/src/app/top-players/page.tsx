@@ -4,10 +4,11 @@ import { TopPlayers } from "@/components/Tables/top-players";
 import { TopPlayersSkeleton } from "@/components/Tables/top-players/skeleton";
 import { Suspense } from "react";
 
+/** Top players page */
 const TablesPage = () => {
   return (
     <>
-      <Breadcrumb pageName="Топ 100" />
+      <Breadcrumb pageName="Top 100" />
 
       <div className="space-y-10">
         <Suspense fallback={<TopPlayersSkeleton />}>

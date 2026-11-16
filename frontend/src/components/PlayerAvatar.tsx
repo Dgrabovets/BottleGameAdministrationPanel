@@ -7,6 +7,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useEffect, useState } from "react";
 
+/** Props of the player avatar */
 type PlayerAvatarProps = {
   src?: string | null;
   alt: string;
@@ -15,6 +16,7 @@ type PlayerAvatarProps = {
   className?: string;
 };
 
+/** Player avatar that falls back to a placeholder when the image fails to load */
 export function PlayerAvatar({
   src,
   alt,

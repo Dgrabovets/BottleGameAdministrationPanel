@@ -1,6 +1,7 @@
 "use client";
 import { Deposits } from "@/components/Tables/deposits";
 
+/** Deposits page */
 const TablesPage = () => {
   return (
     <div className="space-y-10">

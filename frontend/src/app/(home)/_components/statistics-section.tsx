@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
+/** Props of a statistics section */
 type Props = {
   title: string;
   children: ReactNode;
@@ -8,7 +9,13 @@ type Props = {
   footer?: ReactNode;
 };
 
-export function StatisticsSection({ title, children, className, footer }: Props) {
+/** Titled section of the dashboard, with an optional footer */
+export function StatisticsSection({
+  title,
+  children,
+  className,
+  footer,
+}: Props) {
   return (
     <section
       className={cn(
@@ -20,9 +27,7 @@ export function StatisticsSection({ title, children, className, footer }: Props)
         {title}
       </h2>
       {children}
-      {footer ? (
-        <p className="mt-4 text-sm text-dark-6">{footer}</p>
-      ) : null}
+      {footer ? <p className="mt-4 text-sm text-dark-6">{footer}</p> : null}
     </section>
   );
 }

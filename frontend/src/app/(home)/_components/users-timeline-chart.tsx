@@ -10,12 +10,15 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import type { ApexOptions } from "apexcharts";
 import dynamic from "next/dynamic";
 
+/** Chart component loaded on the client only, because ApexCharts needs the browser */
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
+/** Props of the players timeline chart */
 type Props = {
   timeline: StatisticsTimeline;
 };
 
+/** Line chart of the number of players over the selected period */
 export function UsersTimelineChart({ timeline }: Props) {
   const isMobile = useIsMobile();
 
@@ -51,8 +54,7 @@ export function UsersTimelineChart({ timeline }: Props) {
     },
     tooltip: {
       x: {
-        formatter: (value) =>
-          formatTooltipDate(Number(value), timeline.bucket),
+        formatter: (value) => formatTooltipDate(Number(value), timeline.bucket),
       },
       y: {
         formatter: (value) => String(Math.round(value)),
@@ -63,13 +65,13 @@ export function UsersTimelineChart({ timeline }: Props) {
   return (
     <div className="rounded-[10px] bg-white p-6 shadow-1 dark:bg-gray-dark">
       <h3 className="mb-4 text-base font-semibold text-dark dark:text-white">
-        Динамика кол-ва игроков
+        Number of players over time
       </h3>
       <Chart
         options={options}
         series={[
           {
-            name: "Игроки",
+            name: "Players",
             data: toChartSeriesData(timeline, (point) => point.usersCount),
           },
         ]}

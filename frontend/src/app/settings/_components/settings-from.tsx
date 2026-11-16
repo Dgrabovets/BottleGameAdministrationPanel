@@ -9,6 +9,7 @@ import { inputFields } from "./data";
 import { settingsApi } from "@/api/settingsApi";
 import { GameSettings } from "@/components/types";
 
+/** Application balance with its lower threshold */
 interface AppBalanceData {
   amount: number;
   balanceAmountUpdatedAt: string;
@@ -20,6 +21,7 @@ interface AppBalanceData {
   lowerThresholdAdminLoginUpdatedBy: string;
 }
 
+/** Form to edit the game settings and the lower threshold of the application balance */
 export function SettingsForm() {
   const [formData, setFormData] = useState(
     inputFields.reduce<Record<string, any>>((acc, section) => {
@@ -59,7 +61,7 @@ export function SettingsForm() {
         );
         setIsLoading(false);
       } catch (error) {
-        console.error("Ошибка запроса:", error);
+        console.error("Request failed:", error);
         setIsLoading(false);
       }
     }
@@ -73,7 +75,7 @@ export function SettingsForm() {
         const data = await settingsApi.getAppBalance();
         setBalanceData(data);
       } catch (error) {
-        console.error("Ошибка при получении баланса:", error);
+        console.error("Failed to load the balance:", error);
       }
     };
 
@@ -95,9 +97,9 @@ export function SettingsForm() {
 
     try {
       await settingsApi.editSettings(payload);
-      toast.success("Настройки обновлены");
+      toast.success("Settings updated");
     } catch (err) {
-      toast.error("Ошибка при обновлении");
+      toast.error("Update failed");
     }
   };
 
@@ -111,15 +113,15 @@ export function SettingsForm() {
       lowerThreshold === null ||
       lowerThreshold < 0
     ) {
-      alert("Введите корректное значение порога");
+      alert("Enter a valid threshold value");
       return;
     }
 
     try {
       const updated = await settingsApi.updateThreshold(lowerThreshold);
-      alert("Порог успешно обновлен");
+      alert("Threshold updated");
     } catch (err) {
-      alert("Ошибка при обновлении порога");
+      alert("Failed to update the threshold");
       console.error(err);
     }
   };
@@ -130,7 +132,7 @@ export function SettingsForm() {
 
   return (
     <div>
-      <ShowcaseSection title="Настройки">
+      <ShowcaseSection title="Settings">
         <form onSubmit={handleSubmit}>
           {inputFields.map((section, index) => (
             <div key={section.title} className="flex-column">
@@ -147,7 +149,7 @@ export function SettingsForm() {
                     label={label}
                     placeholder={placeholder}
                     value={formData[name] || ""}
-                    handleChange={handleChange} // Добавлен onChange
+                    handleChange={handleChange} // onChange added
                     height="sm"
                   />
                 ))}
@@ -160,34 +162,34 @@ export function SettingsForm() {
               className="rounded-lg border border-stroke px-6 py-[7px] font-medium text-dark hover:shadow-1 dark:border-dark-3 dark:text-white"
               type="button"
             >
-              Отменить
+              Cancel
             </button>
 
             <button
               className="rounded-lg bg-primary px-6 py-[7px] font-medium text-gray-2 hover:bg-opacity-90"
               type="submit"
             >
-              Сохранить
+              Save
             </button>
           </div>
         </form>
       </ShowcaseSection>
 
       <div style={{ marginTop: "50px" }}>
-        <ShowcaseSection title="Баланс приложения">
+        <ShowcaseSection title="Application balance">
           <form onSubmit={handleSubmit}>
             <div className="mb-6 flex flex-col">
               <label
                 className="mb-2 text-sm font-semibold"
                 htmlFor="lowerThreshold"
               >
-                Нижний порог баланса
+                Lower balance threshold
               </label>
               <InputGroup
                 type="number"
                 className="w-full sm:w-1/2"
-                label="Введите нижний порог"
-                placeholder="Введите нижний порог"
+                label="Enter the lower threshold"
+                placeholder="Enter the lower threshold"
                 value={balanceData?.lowerThreshold ?? ""}
                 handleChange={(e) => {
                   const val = e.target.value;
@@ -209,7 +211,7 @@ export function SettingsForm() {
                 onClick={handleSubmitThreshold}
                 className="rounded-lg bg-primary px-6 py-[7px] font-medium text-gray-2 hover:bg-opacity-90"
               >
-                Сохранить
+                Save
               </button>
             </div>
           </form>

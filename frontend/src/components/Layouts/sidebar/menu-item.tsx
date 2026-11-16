@@ -3,6 +3,7 @@ import { cva } from "class-variance-authority";
 import Link from "next/link";
 import { useSidebarContext } from "./sidebar-context";
 
+/** Style variants of a menu item */
 const menuItemBaseStyles = cva(
   "rounded-lg px-3.5 font-medium text-dark-4 transition-all duration-200 dark:text-dark-6",
   {
@@ -19,6 +20,7 @@ const menuItemBaseStyles = cva(
   },
 );
 
+/** Menu item that links to a page or opens a submenu */
 export function MenuItem(
   props: {
     className?: string;

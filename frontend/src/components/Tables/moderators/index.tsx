@@ -10,6 +10,7 @@ import {
 import { useEffect, useState } from "react";
 import { playersApi } from "@/api/playersApi";
 
+/** Moderator as returned by the API */
 interface Moderator {
   id: number;
   login: string;
@@ -17,6 +18,7 @@ interface Moderator {
   role: number;
 }
 
+/** Table of moderators with a delete action */
 export function ModeratorsTable() {
   const [moderators, setModerators] = useState<Moderator[]>([]);
 
@@ -26,7 +28,7 @@ export function ModeratorsTable() {
         const data = await playersApi.getModerators();
         setModerators(data);
       } catch (error) {
-        console.error("Ошибка при получении модераторов", error);
+        console.error("Failed to load the moderators", error);
       }
     };
 
@@ -36,10 +38,10 @@ export function ModeratorsTable() {
   const handleDeleteModerator = async (moderatorId: number) => {
     try {
       await playersApi.deleteModerator(moderatorId);
-      // Обнови список после удаления
+      // Refresh the list after deletion
       setModerators((prev) => prev.filter((mod) => mod.id !== moderatorId));
     } catch (error) {
-      console.error("Ошибка при удалении модератора:", error);
+      console.error("Failed to delete the moderator:", error);
     }
   };
 
@@ -59,10 +61,10 @@ export function ModeratorsTable() {
     <Table className="rounded-[10px] border border-stroke bg-white shadow-1 dark:border-dark-3 dark:bg-gray-dark dark:shadow-card">
       <TableHeader>
         <TableRow className="bg-[#F7F9FC] dark:bg-dark-2">
-          <TableHead>Пользователь</TableHead>
-          <TableHead>Дата регистрации</TableHead>
-          <TableHead>Роль</TableHead>
-          <TableHead className="text-right xl:pr-7.5">Действия</TableHead>
+          <TableHead>User</TableHead>
+          <TableHead>Registration date</TableHead>
+          <TableHead>Role</TableHead>
+          <TableHead className="text-right xl:pr-7.5">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -78,18 +80,18 @@ export function ModeratorsTable() {
             <TableCell>
               <p className="font-medium text-dark dark:text-white">
                 {new Date(moderator.createdAt)
-                  .toLocaleDateString("ru-RU", {
+                  .toLocaleDateString("en-GB", {
                     day: "2-digit",
                     month: "2-digit",
                     year: "numeric",
                   })
-                  .replace(/\./g, "-")}
+                  .replace(/\//g, "-")}
               </p>
             </TableCell>
 
             <TableCell>
               <div className="max-w-fit rounded-full bg-[#2196f3]/[0.08] px-3.5 py-1 text-sm font-medium text-[#2196f3]">
-                {moderator.role === 0 ? "Модератор" : "Админ"}
+                {moderator.role === 0 ? "Moderator" : "Admin"}
               </div>
             </TableCell>
 
@@ -98,7 +100,7 @@ export function ModeratorsTable() {
                 className="text-sm text-red-500 hover:underline"
                 onClick={() => handleDeleteModerator(moderator.id)}
               >
-                Удалить
+                Delete
               </button>
             </TableCell>
           </TableRow>

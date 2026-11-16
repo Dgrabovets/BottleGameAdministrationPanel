@@ -3,7 +3,11 @@
 import { settingsApi } from "@/api/settingsApi";
 import { formatDateParam, getDefaultPeriod } from "@/lib/date-range";
 import { compactFormat, formatRub } from "@/lib/format-number";
-import type { AppStatistics, DateRange, StatisticsTimeline } from "@/lib/statistics-types";
+import type {
+  AppStatistics,
+  DateRange,
+  StatisticsTimeline,
+} from "@/lib/statistics-types";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DateRangeFilter } from "./date-range-filter";
 import * as icons from "./overview-cards/icons";
@@ -12,8 +16,10 @@ import { OverviewCardsSkeleton } from "./overview-cards/skeleton";
 import { StatisticsCharts } from "./statistics-charts";
 import { StatisticsSection } from "./statistics-section";
 
+/** How often the dashboard refreshes the statistics, in milliseconds */
 const POLL_INTERVAL_MS = 5_000;
 
+/** Takes a readable message from an Axios error, or returns the fallback */
 function extractErrorMessage(error: unknown, fallback: string): string {
   if (
     error &&
@@ -26,15 +32,17 @@ function extractErrorMessage(error: unknown, fallback: string): string {
     const data = error.response.data;
     if (typeof data === "string" && data.length > 0) return data;
     if (data && typeof data === "object") {
-      const message = (data as Record<string, unknown>).message
-        ?? (data as Record<string, unknown>).title
-        ?? (data as Record<string, unknown>).error;
+      const message =
+        (data as Record<string, unknown>).message ??
+        (data as Record<string, unknown>).title ??
+        (data as Record<string, unknown>).error;
       if (typeof message === "string" && message.length > 0) return message;
     }
   }
   return fallback;
 }
 
+/** Dashboard: the date range filter, the overview cards and the charts */
 export function DashboardStatistics() {
   const [generalStats, setGeneralStats] = useState<AppStatistics | null>(null);
   const [periodStats, setPeriodStats] = useState<AppStatistics | null>(null);
@@ -81,7 +89,7 @@ export function DashboardStatistics() {
       } catch (error) {
         const message = extractErrorMessage(
           error,
-          "Не удалось загрузить статистику",
+          "Failed to load the statistics",
         );
         setGeneralError(message);
         setPeriodError(message);
@@ -133,27 +141,27 @@ export function DashboardStatistics() {
     if (!generalStats) return [];
     return [
       {
-        label: "Суммарный баланс игроков",
+        label: "Total player balance",
         value: formatRub(generalStats.balancesTotal ?? 0, true),
         Icon: icons.TreasureChest,
       },
       {
-        label: "Доход",
+        label: "Income",
         value: formatRub(generalStats.incomeTotal, true),
         Icon: icons.Profit,
       },
       {
-        label: "Пополнения",
+        label: "Deposits",
         value: formatRub(generalStats.depositsTotal, true),
         Icon: icons.Deposits,
       },
       {
-        label: "Кол-во игроков",
+        label: "Number of players",
         value: compactFormat(generalStats.usersTotal),
         Icon: icons.Users,
       },
       {
-        label: "Выводы в обработке",
+        label: "Withdrawals in progress",
         value: formatRub(generalStats.pendingWithdrawalsTotal ?? 0, true),
         Icon: icons.PendingWithdrawals,
       },
@@ -164,17 +172,17 @@ export function DashboardStatistics() {
     if (!periodStats) return [];
     return [
       {
-        label: "Доход",
+        label: "Income",
         value: formatRub(periodStats.incomeTotal, true),
         Icon: icons.Profit,
       },
       {
-        label: "Пополнения",
+        label: "Deposits",
         value: formatRub(periodStats.depositsTotal, true),
         Icon: icons.Deposits,
       },
       {
-        label: "Кол-во игроков",
+        label: "Number of players",
         value: compactFormat(periodStats.usersTotal),
         Icon: icons.Users,
       },
@@ -183,7 +191,7 @@ export function DashboardStatistics() {
 
   return (
     <div className="space-y-6 md:space-y-8">
-      <StatisticsSection title="Общая статистика">
+      <StatisticsSection title="General statistics">
         {initialLoading ? (
           <OverviewCardsSkeleton
             count={5}
@@ -200,8 +208,8 @@ export function DashboardStatistics() {
       </StatisticsSection>
 
       <StatisticsSection
-        title="Статистика во времени"
-        footer="Обновляется каждые 5 секунд по выбранному периоду"
+        title="Statistics over time"
+        footer="Refreshes every 5 seconds for the selected period"
       >
         <DateRangeFilter
           value={draftRange}
@@ -224,7 +232,7 @@ export function DashboardStatistics() {
         )}
       </StatisticsSection>
 
-      <StatisticsSection title="Графики динамики">
+      <StatisticsSection title="Trend charts">
         <StatisticsCharts timeline={timeline} loading={periodLoading} />
       </StatisticsSection>
     </div>

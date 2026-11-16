@@ -3,6 +3,7 @@
 import { logout } from "@/lib/auth";
 import { LogOutIcon } from "./icons";
 
+/** User menu in the header with the logout button */
 export function UserInfo() {
   return (
     <button
@@ -11,7 +12,7 @@ export function UserInfo() {
       onClick={() => logout()}
     >
       <LogOutIcon />
-      <span className="text-base">Выйти</span>
+      <span className="text-base">Log out</span>
     </button>
   );
 }

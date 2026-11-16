@@ -16,28 +16,32 @@ export interface Player {
   moneyTransactions: Transaction[];
 }
 
+/** Short description of a player */
 export interface ShortPlayer {
   id: number;
   telegramId: number;
   name: string;
   avatarUrl: string;
-  registeredAt: string; // Можно заменить на Date, если будем парсить дату
+  registeredAt: string; // Could be replaced with Date if the date is parsed
   registeredInAppAt: string;
   winRate: number;
 }
 
+/** Ban of a player */
 export interface Ban {
   playerId: number;
   player: string;
   bannedAt: string;
 }
 
+/** Balance of a player */
 export interface Balance {
   playerId: number;
   player: string;
   amount: number;
 }
 
+/** Game round */
 export interface GameRound {
   id: number;
   playerId: number;
@@ -47,12 +51,14 @@ export interface GameRound {
   finishedAt: string;
 }
 
+/** Referral link of a player */
 export interface ReferalLink {
   playerId: number;
   player: string;
   link: string;
 }
 
+/** Invitation of one player by another */
 export interface Invitation {
   playerIdInvitedBy: number;
   playerInvitedBy: string;
@@ -61,6 +67,7 @@ export interface Invitation {
   invitedAt: string;
 }
 
+/** Transaction as stored in the database */
 export interface Transaction {
   id: number;
   amount: number;
@@ -70,18 +77,21 @@ export interface Transaction {
   processedAt: string;
 }
 
+/** Status of a transaction */
 export interface TransactionStatus {
   id: number;
   name: string;
   moneyTransaction: string;
 }
 
+/** Type of a transaction */
 export interface TransactionType {
   id: number;
   name: string;
   moneyTransaction: string;
 }
 
+/** Game settings as returned by the API */
 export interface GameSettings {
   baseWinChance: number;
   minWinChance: number;
@@ -116,6 +126,7 @@ export interface GameSettings {
   uprightThresholdForLine: number;
 }
 
+/** Transactions of a player */
 export interface TransactionsResponse {
   player: ShortPlayer;
   transactions: Transaction[];
@@ -129,6 +140,7 @@ export interface GameRound {
   finishedAt: string;
 }
 
+/** Rounds of a player */
 export interface RoundsResponse {
   player: ShortPlayer;
   rounds: GameRound[];
@@ -145,13 +157,15 @@ export interface StatisticsResponse {
   lossAmount: number;
 }
 
+/** Round of a player */
 export interface Round {
   id: number;
   bet: number;
   isWin: boolean;
-  finishedAt: string; // формат: "YYYY-MM-DDTHH:mm:ssZ"
+  finishedAt: string; // format: "YYYY-MM-DDTHH:mm:ssZ"
 }
 
+/** Player invited by another player */
 type InvitedPlayer = {
   id: number;
   telegramId: number;
@@ -161,6 +175,7 @@ type InvitedPlayer = {
   winRate: number;
 };
 
+/** Options of a player */
 interface OptionData {
   winChance: number;
 }
@@ -168,7 +183,7 @@ interface OptionData {
 // get all players interface
 export interface PlayerData {
   balance: number;
-  bannedAt: string | null; // null, если игрок не забанен
+  bannedAt: string | null; // null if the player is not banned
   player: Player;
   rounds?: Round[];
   transactions?: Transaction[];
@@ -188,6 +203,7 @@ export interface Transaction {
   processedAt: string; // ISO date string
 }
 
+/** Transactions of a player together with the player */
 export interface PlayerTransactions {
   player: Player;
   transactions: Transaction[];

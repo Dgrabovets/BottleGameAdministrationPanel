@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import { type HTMLInputTypeAttribute, useId } from "react";
 
+/** Props of the input group */
 type InputGroupProps = {
   className?: string;
   label: string;
@@ -19,6 +20,7 @@ type InputGroupProps = {
   defaultValue?: string;
 };
 
+/** Labeled input with an optional icon and several visual variants */
 const InputGroup: React.FC<InputGroupProps> = ({
   className,
   label,
@@ -80,6 +82,7 @@ const InputGroup: React.FC<InputGroupProps> = ({
 
 export default InputGroup;
 
+/** Returns the classes of a file input for the given variant */
 function getFileStyles(variant: "style1" | "style2") {
   switch (variant) {
     case "style1":

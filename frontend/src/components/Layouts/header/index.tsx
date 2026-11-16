@@ -5,6 +5,7 @@ import { MenuIcon } from "./icons";
 import { ThemeToggleSwitch } from "./theme-toggle";
 import { UserInfo } from "./user-info";
 
+/** Page header: title, theme switch and user menu */
 export function Header() {
   const { toggleSidebar, isMobile } = useSidebarContext();
 
@@ -24,14 +25,14 @@ export function Header() {
           className="ml-1 mr-2 max-[430px]:hidden min-[375px]:ml-4"
         >
           <span className="text-heading-6 font-bold text-dark dark:text-white">
-            Панель администратора
+            Admin panel
           </span>
         </Link>
       )}
 
       <div className="max-xl:hidden">
         <h1 className="text-heading-5 font-bold text-dark dark:text-white">
-          Панель администратора
+          Admin panel
         </h1>
       </div>
 

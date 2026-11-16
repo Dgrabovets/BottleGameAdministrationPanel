@@ -13,27 +13,27 @@ import Link from "next/link";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { getPlayerAvatarUrl } from "@/lib/player-avatar";
 
+/** Props of the referrals table */
 interface PlayerReferralProps {
   data: PlayerData;
 }
 
+/** Table of the players invited by a player */
 export function PlayerRefferalTable({ data }: PlayerReferralProps) {
   return (
     <div className="rounded-[10px] border border-stroke bg-white shadow-1 dark:border-dark-3 dark:bg-gray-dark dark:shadow-card">
       <div className="px-6 py-4 sm:px-7 sm:py-5 xl:px-8.5">
         <h2 className="text-2xl font-bold text-dark dark:text-white">
-          Рефералы игрока
+          Player referrals
         </h2>
       </div>
       <Table>
         <TableHeader>
           <TableRow className="border-none bg-[#F7F9FC] dark:bg-dark-2 [&>th]:py-4 [&>th]:text-base [&>th]:text-dark [&>th]:dark:text-white">
-            <TableHead className="min-w-[155px] xl:pl-7.5">
-              Пользователь
-            </TableHead>
+            <TableHead className="min-w-[155px] xl:pl-7.5">User</TableHead>
             <TableHead>Telegram ID</TableHead>
-            <TableHead>Дата регистрации</TableHead>
-            <TableHead>Победы</TableHead>
+            <TableHead>Registration date</TableHead>
+            <TableHead>Wins</TableHead>
           </TableRow>
         </TableHeader>
 
@@ -68,7 +68,7 @@ export function PlayerRefferalTable({ data }: PlayerReferralProps) {
               <TableCell>
                 <p className="font-medium text-dark dark:text-white">
                   {new Date(item.registeredInAppAt)
-                    .toLocaleString("ru-RU", {
+                    .toLocaleString("en-GB", {
                       day: "2-digit",
                       month: "2-digit",
                       year: "numeric",

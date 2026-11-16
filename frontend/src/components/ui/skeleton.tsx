@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 
+/** Animated placeholder block */
 export function Skeleton({
   className,
   ...props

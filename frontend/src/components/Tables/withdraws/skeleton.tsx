@@ -8,21 +8,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
+/** Placeholder shown while the withdrawals table loads */
 export function WithdrawsSkeleton() {
   return (
     <div className="rounded-[10px] bg-white shadow-1 dark:bg-gray-dark dark:shadow-card">
       <h2 className="px-4 py-6 text-2xl font-bold text-dark dark:text-white md:px-6 xl:px-9">
-        Запросы на вывод
+        Withdrawal requests
       </h2>
 
       <Table>
         <TableHeader>
           <TableRow className="border-t text-base [&>th]:h-auto [&>th]:py-3 sm:[&>th]:py-4.5">
-            <TableHead className="min-w-[120px]">Пользователь</TableHead>
-            <TableHead>Сумма</TableHead>
-            <TableHead>Дата запроса</TableHead>
-            <TableHead>Статус</TableHead>
-            <TableHead>Действия</TableHead>
+            <TableHead className="min-w-[120px]">User</TableHead>
+            <TableHead>Amount</TableHead>
+            <TableHead>Request date</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Actions</TableHead>
           </TableRow>
         </TableHeader>
 

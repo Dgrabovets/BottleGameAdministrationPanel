@@ -16,19 +16,24 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { PlayerData } from "@/components/types";
 import { ModalOverlay } from "@/components/ui/modal-overlay";
 
+/** Delay before the search request is sent, in milliseconds */
 const SEARCH_DEBOUNCE_MS = 400;
 
+/** Turns the search text into list parameters: a Telegram id or a name */
 function buildSearchParams(query: string): PlayersListParams | undefined {
   const trimmed = query.trim().replace(/^@+/, "");
   if (!trimmed) return undefined;
   return { q: trimmed };
 }
 
+/** Players table with search and ban actions */
 export function Players() {
   const [players, setPlayers] = useState<PlayerData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeSearch, setActiveSearch] = useState<PlayersListParams | undefined>();
+  const [activeSearch, setActiveSearch] = useState<
+    PlayersListParams | undefined
+  >();
   const [banTarget, setBanTarget] = useState<PlayerData | null>(null);
   const [banReason, setBanReason] = useState("");
   const [banError, setBanError] = useState<string | null>(null);
@@ -87,11 +92,11 @@ export function Players() {
 
     const reason = banReason.trim();
     if (!reason) {
-      setBanError("Укажите причину бана");
+      setBanError("Enter the ban reason");
       return;
     }
     if (reason.length > 255) {
-      setBanError("Причина не должна превышать 255 символов");
+      setBanError("The reason must not exceed 255 characters");
       return;
     }
 
@@ -115,7 +120,7 @@ export function Players() {
       }
     } catch (err) {
       console.error(err);
-      setBanError("Не удалось забанить игрока");
+      setBanError("Failed to ban the player");
     } finally {
       setActionLoadingId(null);
     }
@@ -148,7 +153,9 @@ export function Players() {
   return (
     <div className="rounded-[10px] bg-white shadow-1 dark:bg-gray-dark dark:shadow-card">
       <div className="flex flex-col gap-4 px-6 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-7 sm:py-5 xl:px-8.5">
-        <h2 className="text-2xl font-bold text-dark dark:text-white">Игроки</h2>
+        <h2 className="text-2xl font-bold text-dark dark:text-white">
+          Players
+        </h2>
 
         <div className="flex flex-wrap items-center gap-2">
           <div className="relative min-w-[200px] flex-1 sm:max-w-xs">
@@ -156,7 +163,7 @@ export function Players() {
               type="search"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Telegram ID или ник"
+              placeholder="Telegram ID or name"
               autoComplete="off"
               className="h-11 w-full rounded-lg border border-stroke bg-transparent px-4 pr-10 text-sm text-dark outline-none focus:border-primary dark:border-dark-3 dark:text-white"
             />
@@ -172,27 +179,27 @@ export function Players() {
               onClick={handleClearSearch}
               className="inline-flex h-11 shrink-0 select-none items-center justify-center rounded-lg border border-stroke px-4 text-sm font-medium text-dark transition hover:bg-gray-2 dark:border-dark-3 dark:text-white dark:hover:bg-dark-2"
             >
-              Сбросить
+              Reset
             </button>
           )}
         </div>
       </div>
 
       {loading && !isSearching ? (
-        <div className="px-6 py-8 text-center text-dark-6">Загрузка...</div>
+        <div className="px-6 py-8 text-center text-dark-6">Loading...</div>
       ) : (
         <Table>
           <TableHeader>
             <TableRow className="border-t text-base [&>th]:h-auto [&>th]:py-3 sm:[&>th]:py-4.5">
               <TableHead className="min-w-[120px] pl-5 sm:pl-6 xl:pl-7.5">
-                Пользователь
+                User
               </TableHead>
               <TableHead>Telegram ID</TableHead>
-              <TableHead>Баланс</TableHead>
-              <TableHead>Победы</TableHead>
-              <TableHead>Дата регистрации</TableHead>
+              <TableHead>Balance</TableHead>
+              <TableHead>Wins</TableHead>
+              <TableHead>Registration date</TableHead>
               <TableHead className="pr-5 text-right sm:pr-6 xl:pr-7.5">
-                Действия
+                Actions
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -201,16 +208,13 @@ export function Players() {
             {loading && isSearching ? (
               <TableRow>
                 <TableCell colSpan={6} className="py-8 text-center text-dark-6">
-                  Поиск...
+                  Searching...
                 </TableCell>
               </TableRow>
             ) : players.length === 0 ? (
               <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="py-8 text-center text-dark-6"
-                >
-                  {activeSearch ? "Игроки не найдены" : "Нет игроков"}
+                <TableCell colSpan={6} className="py-8 text-center text-dark-6">
+                  {activeSearch ? "No players found" : "No players"}
                 </TableCell>
               </TableRow>
             ) : (
@@ -239,7 +243,7 @@ export function Players() {
                           <span>{player.player.name}</span>
                           {isBanned && (
                             <span className="rounded-full bg-[#D34053]/[0.08] px-2.5 py-0.5 text-xs font-medium text-[#D34053]">
-                              Забанен
+                              Banned
                             </span>
                           )}
                         </div>
@@ -250,18 +254,16 @@ export function Players() {
 
                     <TableCell>{player.balance} ₽</TableCell>
 
-                    <TableCell>
-                      {player.player.winRate?.toFixed(2)}%
-                    </TableCell>
+                    <TableCell>{player.player.winRate?.toFixed(2)}%</TableCell>
 
                     <TableCell>
                       {new Date(player.player.registeredInAppAt)
-                        .toLocaleDateString("ru-RU", {
+                        .toLocaleDateString("en-GB", {
                           day: "2-digit",
                           month: "2-digit",
                           year: "numeric",
                         })
-                        .replace(/\./g, "-")}
+                        .replace(/\//g, "-")}
                     </TableCell>
 
                     <TableCell className="pr-5 text-right sm:pr-6 xl:pr-7.5">
@@ -275,7 +277,7 @@ export function Players() {
                             isBusy && "cursor-not-allowed opacity-50",
                           )}
                         >
-                          Разбанить
+                          Unban
                         </button>
                       ) : (
                         <button
@@ -291,7 +293,7 @@ export function Players() {
                             isBusy && "cursor-not-allowed opacity-50",
                           )}
                         >
-                          Забанить
+                          Ban
                         </button>
                       )}
                     </TableCell>
@@ -314,14 +316,14 @@ export function Players() {
               id="ban-dialog-title"
               className="mb-1 text-lg font-bold text-dark dark:text-white"
             >
-              Забанить игрока
+              Ban player
             </h3>
             <p className="mb-4 text-sm text-dark-6">
               {banTarget.player.name} (ID {banTarget.player.telegramId})
             </p>
 
             <label className="mb-2 block text-sm font-medium text-dark dark:text-white">
-              Причина бана
+              Ban reason
             </label>
             <textarea
               value={banReason}
@@ -329,7 +331,7 @@ export function Players() {
               rows={3}
               maxLength={255}
               className="mb-2 w-full rounded-lg border border-stroke bg-transparent px-4 py-2 text-sm text-dark outline-none focus:border-primary dark:border-dark-3 dark:text-white"
-              placeholder="Опишите причину"
+              placeholder="Describe the reason"
             />
             {banError && (
               <p className="mb-3 text-sm text-[#D34053]">{banError}</p>
@@ -341,7 +343,7 @@ export function Players() {
                 onClick={closeBanModal}
                 className="inline-flex h-10 items-center justify-center rounded-lg border border-stroke px-4 text-sm font-medium text-dark transition hover:bg-gray-2 dark:border-dark-3 dark:text-white"
               >
-                Отмена
+                Cancel
               </button>
               <button
                 type="button"
@@ -349,7 +351,7 @@ export function Players() {
                 disabled={actionLoadingId === banTarget.player.id}
                 className="inline-flex h-10 items-center justify-center rounded-lg bg-[#D34053] px-4 text-sm font-semibold text-white transition hover:bg-[#D34053]/90 disabled:opacity-50"
               >
-                Забанить
+                Ban
               </button>
             </div>
           </div>

@@ -6,31 +6,34 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { statusLabel, typeLabel } from "@/lib/transactions";
 import { cn } from "@/lib/utils";
 import { PlayerData } from "@/components/types";
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
+/** Props of the transactions table */
 interface PlayerTransactionsProps {
   data: PlayerData;
 }
 
+/** Table of the transactions of a player */
 export function PlayerTransactionsTable({ data }: PlayerTransactionsProps) {
   return (
     <div className="rounded-[10px] border border-stroke bg-white shadow-1 dark:border-dark-3 dark:bg-gray-dark dark:shadow-card">
       <div className="px-6 py-4 sm:px-7 sm:py-5 xl:px-8.5">
         <h2 className="text-2xl font-bold text-dark dark:text-white">
-          История транзакций
+          Transaction history
         </h2>
       </div>
       <Table>
         <TableHeader>
           <TableRow className="border-none bg-[#F7F9FC] dark:bg-dark-2 [&>th]:py-4 [&>th]:text-base [&>th]:text-dark [&>th]:dark:text-white">
-            <TableHead className="min-w-[155px] xl:pl-7.5">Сумма</TableHead>
-            <TableHead>Дата транзакции</TableHead>
-            <TableHead>Статус</TableHead>
-            <TableHead>Тип транзакции</TableHead>
+            <TableHead className="min-w-[155px] xl:pl-7.5">Amount</TableHead>
+            <TableHead>Transaction date</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Transaction type</TableHead>
           </TableRow>
         </TableHeader>
 
@@ -46,8 +49,8 @@ export function PlayerTransactionsTable({ data }: PlayerTransactionsProps) {
 
               <TableCell>
                 <p className="font-medium text-dark dark:text-white">
-                  {new Date(item.processedAt)
-                    .toLocaleString("ru-RU", {
+                  {new Date(item.processedAt || item.createdAt)
+                    .toLocaleString("en-GB", {
                       day: "2-digit",
                       month: "2-digit",
                       year: "numeric",
@@ -58,9 +61,13 @@ export function PlayerTransactionsTable({ data }: PlayerTransactionsProps) {
                 </p>
               </TableCell>
 
-              <TableCell>{item.statusName}</TableCell>
+              <TableCell>
+                {statusLabel(item.statusId, item.statusName)}
+              </TableCell>
 
-              <TableCell>{item.typeName || "Неизвестный тип"}</TableCell>
+              <TableCell>
+                {typeLabel(item.typeId, item.typeName || "Unknown type")}
+              </TableCell>
             </TableRow>
           ))}
         </TableBody>
