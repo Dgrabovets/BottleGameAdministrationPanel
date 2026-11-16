@@ -1,5 +1,6 @@
 import type { DateRange } from "@/lib/statistics-types";
 
+/** Formats a date as YYYY-MM-DD for the API parameters */
 export function formatDateParam(date: Date): string {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, "0");
@@ -7,6 +8,7 @@ export function formatDateParam(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+/** Returns the default period: the last 30 days */
 export function getDefaultPeriod(): DateRange {
   const till = new Date();
   till.setHours(0, 0, 0, 0);
@@ -15,6 +17,7 @@ export function getDefaultPeriod(): DateRange {
   return { from, till };
 }
 
+/** Returns the period of the given number of days that ends today */
 export function getPresetPeriod(days: number): DateRange {
   const till = new Date();
   till.setHours(0, 0, 0, 0);
@@ -23,13 +26,17 @@ export function getPresetPeriod(days: number): DateRange {
   return { from, till };
 }
 
+/** Formats a chart date for the bucket size */
 export function formatChartDate(isoDate: string, bucket: string): string {
   const date = new Date(isoDate);
   if (bucket === "year") {
     return date.getFullYear().toString();
   }
   if (bucket === "month") {
-    return date.toLocaleDateString("ru-RU", { month: "short", year: "2-digit" });
+    return date.toLocaleDateString("en-GB", {
+      month: "short",
+      year: "2-digit",
+    });
   }
-  return date.toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
+  return date.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }

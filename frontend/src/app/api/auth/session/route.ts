@@ -1,10 +1,8 @@
-import {
-  AUTH_COOKIE_NAME,
-  getAdminSessionFromToken,
-} from "@/lib/session";
+import { AUTH_COOKIE_NAME, getAdminSessionFromToken } from "@/lib/session";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+/** Returns the current administrator session, or 401 when there is none */
 export async function GET() {
   const cookieStore = await cookies();
   const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;

@@ -1,20 +1,33 @@
+/** Name of the cookie that holds the administrator token */
 export const AUTH_COOKIE_NAME = "bottle_admin_token";
 
+/** Administrator session built from the token */
 export type AdminSession = {
   userId: string;
   userEmail: string;
   role: string;
 };
 
+/** Backend URL used in development when none is configured */
+const DEV_API_URL = "http://localhost:8080/api";
+
+/** Returns the backend API URL, required in production */
 export function getBackendApiUrl(): string {
   const url =
     process.env.INTERNAL_API_URL ||
     process.env.NEXT_PUBLIC_API_URL ||
-    "https://api.bottledevadmin.ru/api";
+    (process.env.NODE_ENV === "production" ? "" : DEV_API_URL);
+
+  if (!url) {
+    throw new Error(
+      "INTERNAL_API_URL is not set. Point it at the Bottle Game API, for example https://api.example.com/api.",
+    );
+  }
 
   return url.replace(/\/$/, "");
 }
 
+/** Reads the payload of a JWT without verifying the signature */
 export function parseJwtPayload(token: string): Record<string, unknown> | null {
   try {
     const payload = token.split(".")[1];
@@ -28,6 +41,7 @@ export function parseJwtPayload(token: string): Record<string, unknown> | null {
   }
 }
 
+/** Reads a claim by its short or its long name */
 function readClaim(
   decoded: Record<string, unknown>,
   ...keys: string[]
@@ -40,6 +54,7 @@ function readClaim(
   return null;
 }
 
+/** Checks whether the token has expired */
 export function isTokenExpired(token: string): boolean {
   const decoded = parseJwtPayload(token);
   if (!decoded) return true;
@@ -50,6 +65,7 @@ export function isTokenExpired(token: string): boolean {
   return exp <= Math.floor(Date.now() / 1000);
 }
 
+/** Builds the session from the token, or returns null when it is invalid */
 export function getAdminSessionFromToken(token: string): AdminSession | null {
   if (isTokenExpired(token)) return null;
 
@@ -78,4 +94,5 @@ export function getAdminSessionFromToken(token: string): AdminSession | null {
   return { userId, userEmail, role };
 }
 
+/** Pages only an administrator may open */
 export const ADMIN_ONLY_PATHS = ["/settings", "/moderators"];

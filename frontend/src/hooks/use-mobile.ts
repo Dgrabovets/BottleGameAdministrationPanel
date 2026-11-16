@@ -1,7 +1,9 @@
 import { useEffect, useState } from "react";
 
+/** Screen width in pixels below which the layout is treated as mobile */
 export const MOBILE_BREAKPOINT = 850;
 
+/** Tells whether the screen is narrower than the mobile breakpoint */
 export function useIsMobile() {
   const [isMobile, setIsMobile] = useState<boolean>();
 

@@ -7,16 +7,15 @@ import {
   recalculateStatisticsExcludingBanned,
   resolveBannedPlayerIdsFromData,
 } from "@/lib/exclude-banned";
-import type {
-  AppStatistics,
-  StatisticsTimeline,
-} from "@/lib/statistics-types";
+import type { AppStatistics, StatisticsTimeline } from "@/lib/statistics-types";
 
+/** Period of the statistics request */
 type StatisticsParams = {
   dateFrom: string;
   dateTill: string;
 };
 
+/** Maps the statistics response to AppStatistics, accepting camelCase and PascalCase */
 function normalizeStatistics(data: Record<string, unknown>): AppStatistics {
   return {
     usersTotal: Number(data.usersTotal ?? data.UsersTotal ?? 0),
@@ -37,6 +36,7 @@ function normalizeStatistics(data: Record<string, unknown>): AppStatistics {
   };
 }
 
+/** Maps a single timeline point of the response, accepting camelCase and PascalCase */
 function normalizeTimelinePoint(
   point: Record<string, unknown>,
 ): StatisticsTimeline["points"][number] {
@@ -51,6 +51,7 @@ function normalizeTimelinePoint(
   };
 }
 
+/** Maps the timeline response to StatisticsTimeline */
 function normalizeTimeline(data: Record<string, unknown>): StatisticsTimeline {
   const rawPoints = (data.points ?? data.Points ?? []) as Record<
     string,
@@ -65,6 +66,7 @@ function normalizeTimeline(data: Record<string, unknown>): StatisticsTimeline {
   };
 }
 
+/** Loads the active players and the transactions and works out which players are banned */
 async function loadBannedAwareData() {
   const [activePlayers, rawTransactions] = await Promise.all([
     playersApi.getPlayersList(),
@@ -84,6 +86,7 @@ async function loadBannedAwareData() {
   return { activePlayers, transactions, bannedIds };
 }
 
+/** Recalculates the statistics without banned players when there are any */
 async function applyBannedExclusion(
   stats: AppStatistics,
   params?: StatisticsParams,
@@ -118,6 +121,7 @@ async function applyBannedExclusion(
   };
 }
 
+/** API calls for the statistics, the game settings and the application balance */
 export const settingsApi = {
   getSettingsList: async () => {
     const response = await apiClient.get<GameSettings>(
@@ -139,7 +143,7 @@ export const settingsApi = {
       });
       return response.data;
     } catch (error) {
-      console.error("Ошибка при обновлении порога:", error);
+      console.error("Failed to update the threshold:", error);
       throw error;
     }
   },

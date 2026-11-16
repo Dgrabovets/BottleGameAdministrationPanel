@@ -3,6 +3,7 @@
 import type { AdminSession } from "@/lib/session";
 import { useEffect, useState } from "react";
 
+/** Loads the administrator session from /api/auth/session */
 export function useSession() {
   const [session, setSession] = useState<AdminSession | null>(null);
   const [loading, setLoading] = useState(true);

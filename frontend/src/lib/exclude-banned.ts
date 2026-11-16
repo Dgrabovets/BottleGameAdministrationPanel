@@ -1,10 +1,16 @@
 import apiClient from "@/api/axiosInstance";
-import { dedupeTransactionsList } from "@/lib/transactions";
+import {
+  dedupeTransactionsList,
+  TRANSACTION_STATUS,
+  TRANSACTION_TYPE,
+} from "@/lib/transactions";
 import type { AppStatistics } from "@/lib/statistics-types";
 import type { PlayerData, PlayerTransactions } from "@/components/types";
 
+/** Key of the local storage that keeps the ids of banned players */
 const BANNED_IDS_STORAGE_KEY = "bottle_admin_banned_player_ids";
 
+/** Reads the stored ids of banned players */
 function readStoredBannedIds(): Set<number> {
   if (typeof window === "undefined") {
     return new Set();
@@ -20,6 +26,7 @@ function readStoredBannedIds(): Set<number> {
   }
 }
 
+/** Stores the ids of banned players */
 function writeStoredBannedIds(ids: Set<number>): void {
   if (typeof window === "undefined") {
     return;
@@ -28,18 +35,21 @@ function writeStoredBannedIds(ids: Set<number>): void {
   sessionStorage.setItem(BANNED_IDS_STORAGE_KEY, JSON.stringify([...ids]));
 }
 
+/** Remembers a player as banned */
 export function rememberBannedPlayerId(playerId: number): void {
   const ids = readStoredBannedIds();
   ids.add(playerId);
   writeStoredBannedIds(ids);
 }
 
+/** Forgets a banned player after the unban */
 export function forgetBannedPlayerId(playerId: number): void {
   const ids = readStoredBannedIds();
   ids.delete(playerId);
   writeStoredBannedIds(ids);
 }
 
+/** Loads all transactions without removing banned players */
 export async function loadRawTransactionsList(): Promise<PlayerTransactions[]> {
   const response = await apiClient.get<PlayerTransactions[]>(
     "/Balance/get-all-transactions",
@@ -47,6 +57,7 @@ export async function loadRawTransactionsList(): Promise<PlayerTransactions[]> {
   return dedupeTransactionsList(response.data ?? []);
 }
 
+/** Collects the ids of the players in the transactions */
 function collectTransactionPlayerIds(
   transactions: PlayerTransactions[],
 ): Set<number> {
@@ -60,11 +71,13 @@ function collectTransactionPlayerIds(
   return ids;
 }
 
+/** Data needed to find the banned players */
 export type ResolveBannedPlayerIdsOptions = {
   activePlayers: PlayerData[];
   rawTransactions: PlayerTransactions[];
 };
 
+/** Finds the banned players: the stored ones, the ones missing from the active list and the ones with a ban date */
 export function resolveBannedPlayerIdsFromData(
   options: ResolveBannedPlayerIdsOptions,
 ): Set<number> {
@@ -89,6 +102,7 @@ export function resolveBannedPlayerIdsFromData(
   return banned;
 }
 
+/** Removes the transactions of banned players */
 export function filterTransactionsByBannedIds(
   data: PlayerTransactions[],
   bannedIds: Set<number>,
@@ -97,6 +111,7 @@ export function filterTransactionsByBannedIds(
   return data.filter((item) => !bannedIds.has(item.player.id));
 }
 
+/** Hides banned players from the default list, a search shows everyone */
 export function filterNonBannedPlayersForDefaultList(
   players: PlayerData[],
   isSearch: boolean,
@@ -107,11 +122,11 @@ export function filterNonBannedPlayersForDefaultList(
 
   const storedBanned = readStoredBannedIds();
   return players.filter(
-    (player) =>
-      player.bannedAt == null && !storedBanned.has(player.player.id),
+    (player) => player.bannedAt == null && !storedBanned.has(player.player.id),
   );
 }
 
+/** Filters players by a Telegram id or by part of the name */
 export function filterPlayersBySearch(
   players: PlayerData[],
   query: string,
@@ -130,11 +145,13 @@ export function filterPlayersBySearch(
   );
 }
 
+/** Parses a processing date, returns null when it is invalid */
 function parseProcessedAt(value: string): Date | null {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? null : date;
 }
 
+/** Checks that a date falls inside the optional range */
 function isWithinRange(
   processedAt: string,
   dateFrom?: string,
@@ -150,6 +167,7 @@ function isWithinRange(
   return processed >= from && processed <= till;
 }
 
+/** Recalculates the statistics from the transactions, leaving banned players out */
 export function recalculateStatisticsExcludingBanned(
   transactions: PlayerTransactions[],
   players: PlayerData[],
@@ -167,8 +185,8 @@ export function recalculateStatisticsExcludingBanned(
     .flatMap((item) => item.transactions)
     .filter(
       (transaction) =>
-        transaction.typeName === "Пополнение" &&
-        transaction.statusName === "Одобрено" &&
+        transaction.typeId === TRANSACTION_TYPE.deposit &&
+        transaction.statusId === TRANSACTION_STATUS.approved &&
         isWithinRange(
           transaction.processedAt,
           params?.dateFrom,
@@ -181,8 +199,8 @@ export function recalculateStatisticsExcludingBanned(
     .flatMap((item) => item.transactions)
     .filter(
       (transaction) =>
-        transaction.typeName === "Вывод" &&
-        transaction.statusName === "Одобрено" &&
+        transaction.typeId === TRANSACTION_TYPE.withdrawal &&
+        transaction.statusId === TRANSACTION_STATUS.approved &&
         isWithinRange(
           transaction.processedAt,
           params?.dateFrom,
@@ -195,8 +213,8 @@ export function recalculateStatisticsExcludingBanned(
     .flatMap((item) => item.transactions)
     .filter(
       (transaction) =>
-        transaction.typeName === "Вывод" &&
-        transaction.statusName === "Ожидание",
+        transaction.typeId === TRANSACTION_TYPE.withdrawal &&
+        transaction.statusId === TRANSACTION_STATUS.pending,
     )
     .reduce((sum, transaction) => sum + transaction.amount, 0);
 

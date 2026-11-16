@@ -7,9 +7,12 @@ import {
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+/** Pages open without a session */
 const PUBLIC_PATHS = ["/login", "/logout"];
+/** API routes open without a session */
 const PUBLIC_API_PREFIXES = ["/api/auth/login"];
 
+/** Tells whether the path is a static asset */
 function isStaticAsset(pathname: string): boolean {
   return (
     pathname.startsWith("/_next") ||
@@ -19,6 +22,7 @@ function isStaticAsset(pathname: string): boolean {
   );
 }
 
+/** Guards the app: removes an expired token, lets static assets and public paths through and requires a session for everything else */
 export default function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get(AUTH_COOKIE_NAME)?.value;
@@ -73,7 +77,10 @@ export default function middleware(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  if (hasValidToken && ADMIN_ONLY_PATHS.some((path) => pathname.startsWith(path))) {
+  if (
+    hasValidToken &&
+    ADMIN_ONLY_PATHS.some((path) => pathname.startsWith(path))
+  ) {
     const session = getAdminSessionFromToken(token!);
     if (!session || session.role !== "Admin") {
       return NextResponse.redirect(new URL("/", request.url));
@@ -83,6 +90,7 @@ export default function middleware(request: NextRequest) {
   return NextResponse.next();
 }
 
+/** Paths the middleware runs for */
 export const config = {
   matcher: ["/((?!_next/static|_next/image).*)"],
 };

@@ -8,12 +8,14 @@ import {
   rememberBannedPlayerId,
 } from "@/lib/exclude-banned";
 
+/** Query parameters of the players list */
 export type PlayersListParams = {
   q?: string;
   telegramId?: number;
   name?: string;
 };
 
+/** Builds the URL of the players list from the query parameters */
 function buildPlayersListUrl(params?: PlayersListParams): string {
   const searchParams = new URLSearchParams();
 
@@ -32,7 +34,10 @@ function buildPlayersListUrl(params?: PlayersListParams): string {
   return query ? `/Player/get-all-players?${query}` : "/Player/get-all-players";
 }
 
-function normalizeSearchParams(params?: PlayersListParams): PlayersListParams | undefined {
+/** Trims the search parameters and drops the empty ones */
+function normalizeSearchParams(
+  params?: PlayersListParams,
+): PlayersListParams | undefined {
   if (!params) return undefined;
 
   if (params.q?.trim()) {
@@ -50,10 +55,9 @@ function normalizeSearchParams(params?: PlayersListParams): PlayersListParams | 
   return undefined;
 }
 
+/** API calls for players, bans and the player balance */
 export const playersApi = {
-  getPlayersList: async (
-    params?: PlayersListParams,
-  ): Promise<PlayerData[]> => {
+  getPlayersList: async (params?: PlayersListParams): Promise<PlayerData[]> => {
     const normalized = normalizeSearchParams(params);
 
     try {
@@ -91,9 +95,7 @@ export const playersApi = {
     return response.data;
   },
   unbanPlayer: async (playerId: number) => {
-    const response = await apiClient.post(
-      `/Player/unban-player/${playerId}`,
-    );
+    const response = await apiClient.post(`/Player/unban-player/${playerId}`);
     forgetBannedPlayerId(playerId);
     return response.data;
   },
@@ -131,14 +133,13 @@ export const playersApi = {
   },
 
   /**
-   * Обновление баланса игрока (только для админа).
-   * Отправляет только поле balance, остальные поля null.
+   * Updates the player balance (admin only)
+   * Sends only the balance field, the other fields are null
    */
   editPlayerBalance: async (playerId: number, balance: number) => {
-    const response = await apiClient.post(
-      `/Player/edit-player/${playerId}`,
-      { balance },
-    );
+    const response = await apiClient.post(`/Player/edit-player/${playerId}`, {
+      balance,
+    });
     return response.data;
   },
   registerModerator: async (login: string, password: string) => {

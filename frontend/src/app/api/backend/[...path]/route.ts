@@ -3,6 +3,7 @@ import { AUTH_COOKIE_NAME } from "@/lib/session";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
+/** Forwards a request to the backend API after checking the path and the origin */
 async function proxyRequest(
   request: NextRequest,
   pathSegments: string[],
@@ -56,28 +57,34 @@ async function proxyRequest(
   }
 }
 
+/** Route context with the path segments after /api/backend */
 type RouteContext = {
   params: Promise<{ path: string[] }>;
 };
 
+/** Proxies GET requests to the backend API */
 export async function GET(request: NextRequest, context: RouteContext) {
   const { path } = await context.params;
   return proxyRequest(request, path);
 }
 
+/** Proxies POST requests to the backend API */
 export async function POST(request: NextRequest, context: RouteContext) {
   const { path } = await context.params;
   return proxyRequest(request, path);
 }
 
+/** Proxies PUT requests to the backend API */
 export async function PUT(request: NextRequest, context: RouteContext) {
   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
 }
 
+/** Proxies PATCH requests to the backend API */
 export async function PATCH(request: NextRequest, context: RouteContext) {
   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
 }
 
+/** Proxies DELETE requests to the backend API */
 export async function DELETE(request: NextRequest, context: RouteContext) {
   const { path } = await context.params;
   return proxyRequest(request, path);

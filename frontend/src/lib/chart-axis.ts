@@ -1,6 +1,10 @@
 import type { ApexOptions } from "apexcharts";
-import type { StatisticsTimeline, StatisticsTimelinePoint } from "@/lib/statistics-types";
+import type {
+  StatisticsTimeline,
+  StatisticsTimelinePoint,
+} from "@/lib/statistics-types";
 
+/** Formats an axis label of the timeline for the bucket size */
 export function formatAxisLabel(timestamp: number, bucket: string): string {
   const date = new Date(timestamp);
 
@@ -9,17 +13,18 @@ export function formatAxisLabel(timestamp: number, bucket: string): string {
   }
 
   if (bucket === "month") {
-    return date.toLocaleDateString("ru-RU", {
+    return date.toLocaleDateString("en-GB", {
       month: "short",
     });
   }
 
-  return date.toLocaleDateString("ru-RU", {
+  return date.toLocaleDateString("en-GB", {
     day: "numeric",
     month: "short",
   });
 }
 
+/** Formats the date in the tooltip of the timeline for the bucket size */
 export function formatTooltipDate(timestamp: number, bucket: string): string {
   const date = new Date(timestamp);
 
@@ -28,29 +33,31 @@ export function formatTooltipDate(timestamp: number, bucket: string): string {
   }
 
   if (bucket === "month") {
-    return date.toLocaleDateString("ru-RU", {
+    return date.toLocaleDateString("en-GB", {
       month: "long",
       year: "numeric",
     });
   }
 
-  return date.toLocaleDateString("ru-RU", {
+  return date.toLocaleDateString("en-GB", {
     day: "numeric",
     month: "long",
     year: "numeric",
   });
 }
 
+/** Tells whether the timeline spans more than one calendar year */
 function spansMultipleYears(timeline: StatisticsTimeline): boolean {
   if (timeline.points.length === 0) return false;
 
-  const years = timeline.points.map(
-    (point) => new Date(point.date).getFullYear(),
+  const years = timeline.points.map((point) =>
+    new Date(point.date).getFullYear(),
   );
 
   return new Set(years).size > 1;
 }
 
+/** Builds a label formatter that shows the year at year boundaries */
 function buildYearBoundaryFormatter(timeline: StatisticsTimeline) {
   const multiYear = spansMultipleYears(timeline);
   const shownYears = new Set<number>();
@@ -81,6 +88,7 @@ function buildYearBoundaryFormatter(timeline: StatisticsTimeline) {
   };
 }
 
+/** Builds the x axis options of a timeline chart */
 export function buildTimelineXAxisOptions(
   timeline: StatisticsTimeline,
   isMobile: boolean,
@@ -102,6 +110,7 @@ export function buildTimelineXAxisOptions(
   };
 }
 
+/** Converts a timeline into chart series data */
 export function toChartSeriesData(
   timeline: StatisticsTimeline,
   getY: (point: StatisticsTimelinePoint) => number,

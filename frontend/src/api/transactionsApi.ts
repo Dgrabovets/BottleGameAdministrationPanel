@@ -7,6 +7,7 @@ import {
 } from "@/lib/exclude-banned";
 import type { PlayerTransactions } from "@/components/types";
 
+/** Loads all transactions without the ones of banned players */
 async function loadBannedAwareTransactions(): Promise<PlayerTransactions[]> {
   const [activePlayers, rawTransactions] = await Promise.all([
     playersApi.getPlayersList(),
@@ -21,12 +22,13 @@ async function loadBannedAwareTransactions(): Promise<PlayerTransactions[]> {
   return filterTransactionsByBannedIds(rawTransactions, bannedIds);
 }
 
+/** API calls for transactions */
 export const transactionsApi = {
   getTransactionsList: async (): Promise<PlayerTransactions[]> => {
     try {
       return await loadBannedAwareTransactions();
     } catch (error) {
-      console.error("Ошибка при получении данных:", error);
+      console.error("Failed to load the data:", error);
       throw error;
     }
   },
@@ -44,7 +46,7 @@ export const transactionsApi = {
       );
       return response.data;
     } catch (error) {
-      console.error("Ошибка при обновлении статуса транзакции:", error);
+      console.error("Failed to update the transaction status:", error);
       throw error;
     }
   },

@@ -1,5 +1,7 @@
+/** Placeholder image shown when a player has no avatar */
 export const PLAYER_AVATAR_PLACEHOLDER = "/images/user/avatar-placeholder.svg";
 
+/** Host suffixes avatars may be loaded from */
 const ALLOWED_AVATAR_HOST_SUFFIXES = [
   "t.me",
   "telegram.org",
@@ -7,6 +9,7 @@ const ALLOWED_AVATAR_HOST_SUFFIXES = [
   "telegram-cdn.org",
 ];
 
+/** Normalizes an avatar URL, returns null when it is empty or not a valid URL */
 export function normalizeAvatarUrl(url?: string | null): string | null {
   if (!url?.trim()) return null;
 
@@ -37,6 +40,7 @@ export function normalizeAvatarUrl(url?: string | null): string | null {
   }
 }
 
+/** Checks that the avatar host is on the allowed list */
 export function isAllowedAvatarHost(hostname: string): boolean {
   const host = hostname.toLowerCase();
   return ALLOWED_AVATAR_HOST_SUFFIXES.some(
@@ -44,10 +48,12 @@ export function isAllowedAvatarHost(hostname: string): boolean {
   );
 }
 
+/** Returns the URL of an avatar through the proxy of this app */
 export function getProxiedAvatarUrl(externalUrl: string): string {
   return `/api/avatar?url=${encodeURIComponent(externalUrl)}`;
 }
 
+/** Returns the avatar source to show: the proxied URL or the placeholder */
 export function resolvePlayerAvatarSrc(url?: string | null): string {
   const normalized = normalizeAvatarUrl(url);
 
@@ -71,7 +77,7 @@ export function resolvePlayerAvatarSrc(url?: string | null): string {
   return PLAYER_AVATAR_PLACEHOLDER;
 }
 
-/** Достаёт URL аватара из ответа API (camelCase или PascalCase). */
+/** Extracts the avatar URL from the API response (camelCase or PascalCase) */
 export function getPlayerAvatarUrl(
   player?: { avatarUrl?: string; AvatarUrl?: string } | null,
 ): string | undefined {
