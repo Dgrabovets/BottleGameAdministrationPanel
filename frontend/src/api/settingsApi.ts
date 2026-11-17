@@ -1,12 +1,5 @@
 import apiClient from "./axiosInstance";
-import { playersApi } from "@/api/playersApi";
 import { GameSettings } from "@/components/types";
-import {
-  filterTransactionsByBannedIds,
-  loadRawTransactionsList,
-  recalculateStatisticsExcludingBanned,
-  resolveBannedPlayerIdsFromData,
-} from "@/lib/exclude-banned";
 import type { AppStatistics, StatisticsTimeline } from "@/lib/statistics-types";
 
 /** Period of the statistics request */
@@ -66,61 +59,6 @@ function normalizeTimeline(data: Record<string, unknown>): StatisticsTimeline {
   };
 }
 
-/** Loads the active players and the transactions and works out which players are banned */
-async function loadBannedAwareData() {
-  const [activePlayers, rawTransactions] = await Promise.all([
-    playersApi.getPlayersList(),
-    loadRawTransactionsList(),
-  ]);
-
-  const bannedIds = resolveBannedPlayerIdsFromData({
-    activePlayers,
-    rawTransactions,
-  });
-
-  const transactions = filterTransactionsByBannedIds(
-    rawTransactions,
-    bannedIds,
-  );
-
-  return { activePlayers, transactions, bannedIds };
-}
-
-/** Recalculates the statistics without banned players when there are any */
-async function applyBannedExclusion(
-  stats: AppStatistics,
-  params?: StatisticsParams,
-): Promise<AppStatistics> {
-  const { activePlayers, transactions, bannedIds } =
-    await loadBannedAwareData();
-
-  if (bannedIds.size === 0) {
-    return stats;
-  }
-
-  const recalculated = recalculateStatisticsExcludingBanned(
-    transactions,
-    activePlayers,
-    params,
-  );
-
-  return {
-    ...stats,
-    usersTotal: recalculated.usersTotal,
-    depositsTotal: recalculated.depositsTotal,
-    withdrawalsTotal: recalculated.withdrawalsTotal,
-    incomeTotal: recalculated.incomeTotal,
-    balancesTotal:
-      recalculated.balancesTotal !== undefined
-        ? recalculated.balancesTotal
-        : stats.balancesTotal,
-    pendingWithdrawalsTotal:
-      recalculated.pendingWithdrawalsTotal !== undefined
-        ? recalculated.pendingWithdrawalsTotal
-        : stats.pendingWithdrawalsTotal,
-  };
-}
-
 /** API calls for the statistics, the game settings and the application balance */
 export const settingsApi = {
   getSettingsList: async () => {
@@ -149,8 +87,7 @@ export const settingsApi = {
   },
   getStatistics: async (params?: StatisticsParams): Promise<AppStatistics> => {
     const response = await apiClient.get("/Admin/get-statistics", { params });
-    const stats = normalizeStatistics(response.data);
-    return applyBannedExclusion(stats, params);
+    return normalizeStatistics(response.data);
   },
   getStatisticsTimeline: async (
     params: StatisticsParams,

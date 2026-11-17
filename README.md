@@ -24,7 +24,7 @@ The dashboard for [Bottle Game API](https://github.com/Dgrabovets/BottleGameAPI)
 
 - **Dashboard with live numbers.** Balance, deposits, income, active players and pending withdrawals, plus growth charts for any date range. It refreshes every 5 seconds.
 - **Withdrawals under control.** Approve or reject a request. A status can change only once, the API enforces it.
-- **Player moderation.** Search by Telegram id or name, ban and unban with a reason, and open a profile with rounds, transactions and referrals.
+- **Player moderation.** Search by Telegram id or name, ban and unban with a reason, and open a profile with rounds, transactions and referrals. Players, deposits and withdrawals load page by page.
 - **Game tuning.** Edit win chances, multipliers and boosts, and set the lower threshold of the application balance.
 - **Roles.** Admin and Moderator accounts exist. The panel hides the game settings and staff pages from moderators, and the API decides what each role may do (see [Known limitations](#known-limitations)).
 - **Safe by design.** The API token never reaches the browser, every request goes through a server-side proxy with an allow-list. See [How it talks to the API](#how-it-talks-to-the-api).

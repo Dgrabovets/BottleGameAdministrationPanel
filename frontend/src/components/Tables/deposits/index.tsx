@@ -13,6 +13,7 @@ import { useEffect, useState } from "react";
 import { transactionsApi } from "@/api/transactionsApi";
 import { cn } from "@/lib/utils";
 import { PlayerTransactions } from "@/components/types";
+import { Pagination } from "@/components/ui/pagination";
 import {
   TRANSACTION_STATUS,
   TRANSACTION_TYPE,
@@ -20,23 +21,40 @@ import {
   typeLabel,
 } from "@/lib/transactions";
 
-/** Table of deposits */
+/** Deposits per page */
+const PAGE_SIZE = 20;
+
+/** Table of deposits, one page at a time */
 export function Deposits() {
   const [data, setData] = useState<PlayerTransactions[]>([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchWithdraws = async () => {
-      try {
-        const response = await transactionsApi.getTransactionsList();
-        setData(response);
-      } catch (err) {
-        console.error(err);
-      } finally {
-      }
-    };
+    let cancelled = false;
+    setLoading(true);
 
-    fetchWithdraws();
-  }, []);
+    transactionsApi
+      .getTransactionsList({
+        typeId: TRANSACTION_TYPE.deposit,
+        page,
+        pageSize: PAGE_SIZE,
+      })
+      .then((response) => {
+        if (cancelled) return;
+        setData(response.items);
+        setTotal(response.total);
+      })
+      .catch((err) => console.error(err))
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [page]);
 
   if (!data) {
     return <div></div>;
@@ -134,6 +152,13 @@ export function Deposits() {
           ))}
         </TableBody>
       </Table>
+      <Pagination
+        page={page}
+        pageSize={PAGE_SIZE}
+        total={total}
+        onChange={setPage}
+        disabled={loading}
+      />
     </div>
   );
 }

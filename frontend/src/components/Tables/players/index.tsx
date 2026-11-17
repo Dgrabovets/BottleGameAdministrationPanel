@@ -15,6 +15,10 @@ import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { PlayerData } from "@/components/types";
 import { ModalOverlay } from "@/components/ui/modal-overlay";
+import { Pagination } from "@/components/ui/pagination";
+
+/** Players per page */
+const PAGE_SIZE = 20;
 
 /** Delay before the search request is sent, in milliseconds */
 const SEARCH_DEBOUNCE_MS = 400;
@@ -31,6 +35,8 @@ export function Players() {
   const [players, setPlayers] = useState<PlayerData[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
   const [activeSearch, setActiveSearch] = useState<
     PlayersListParams | undefined
   >();
@@ -40,46 +46,65 @@ export function Players() {
   const [actionLoadingId, setActionLoadingId] = useState<number | null>(null);
   const requestIdRef = useRef(0);
 
-  const loadPlayers = useCallback(async (params?: PlayersListParams) => {
-    const requestId = ++requestIdRef.current;
-    setLoading(true);
+  const loadPlayers = useCallback(
+    async (params: PlayersListParams | undefined, pageNumber: number) => {
+      const requestId = ++requestIdRef.current;
+      setLoading(true);
 
-    try {
-      const response = await playersApi.getPlayersList(params);
-      if (requestId !== requestIdRef.current) return;
-      setPlayers(response);
-    } catch (err) {
-      if (requestId !== requestIdRef.current) return;
-      console.error(err);
-      setPlayers([]);
-    } finally {
-      if (requestId === requestIdRef.current) {
-        setLoading(false);
+      try {
+        const response = await playersApi.getPlayersList({
+          ...params,
+          page: pageNumber,
+          pageSize: PAGE_SIZE,
+        });
+        if (requestId !== requestIdRef.current) return;
+
+        // The last player of the last page was banned: go back to the page before it
+        if (response.items.length === 0 && pageNumber > 1) {
+          setPage(pageNumber - 1);
+          return;
+        }
+
+        setPlayers(response.items);
+        setTotal(response.total);
+      } catch (err) {
+        if (requestId !== requestIdRef.current) return;
+        console.error(err);
+        setPlayers([]);
+        setTotal(0);
+      } finally {
+        if (requestId === requestIdRef.current) {
+          setLoading(false);
+        }
       }
-    }
-  }, []);
+    },
+    [],
+  );
 
   useEffect(() => {
     const trimmed = searchQuery.trim();
 
     if (!trimmed) {
       setActiveSearch(undefined);
-      loadPlayers();
+      loadPlayers(undefined, page);
       return;
     }
 
     const timer = window.setTimeout(() => {
       const params = buildSearchParams(searchQuery);
       setActiveSearch(params);
-      loadPlayers(params);
+      loadPlayers(params, page);
     }, SEARCH_DEBOUNCE_MS);
 
     return () => window.clearTimeout(timer);
-  }, [searchQuery, loadPlayers]);
+  }, [searchQuery, page, loadPlayers]);
 
-  const handleClearSearch = () => {
-    setSearchQuery("");
+  const handleSearchChange = (value: string) => {
+    setSearchQuery(value);
+    setPage(1);
   };
+
+  const handleClearSearch = () => handleSearchChange("");
 
   const closeBanModal = () => {
     setBanTarget(null);
@@ -105,19 +130,7 @@ export function Players() {
     try {
       await playersApi.banPlayer(banTarget.player.id, reason);
       closeBanModal();
-      if (activeSearch) {
-        setPlayers((prev) =>
-          prev.map((p) =>
-            p.player.id === banTarget.player.id
-              ? { ...p, bannedAt: new Date().toISOString() }
-              : p,
-          ),
-        );
-      } else {
-        setPlayers((prev) =>
-          prev.filter((p) => p.player.id !== banTarget.player.id),
-        );
-      }
+      await loadPlayers(activeSearch, page);
     } catch (err) {
       console.error(err);
       setBanError("Failed to ban the player");
@@ -130,17 +143,7 @@ export function Players() {
     setActionLoadingId(player.player.id);
     try {
       await playersApi.unbanPlayer(player.player.id);
-      if (activeSearch) {
-        setPlayers((prev) =>
-          prev.map((p) =>
-            p.player.id === player.player.id ? { ...p, bannedAt: null } : p,
-          ),
-        );
-      } else {
-        setPlayers((prev) =>
-          prev.filter((p) => p.player.id !== player.player.id),
-        );
-      }
+      await loadPlayers(activeSearch, page);
     } catch (err) {
       console.error(err);
     } finally {
@@ -162,7 +165,7 @@ export function Players() {
             <input
               type="search"
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
               placeholder="Telegram ID or name"
               autoComplete="off"
               className="h-11 w-full rounded-lg border border-stroke bg-transparent px-4 pr-10 text-sm text-dark outline-none focus:border-primary dark:border-dark-3 dark:text-white"
@@ -304,6 +307,14 @@ export function Players() {
           </TableBody>
         </Table>
       )}
+
+      <Pagination
+        page={page}
+        pageSize={PAGE_SIZE}
+        total={total}
+        onChange={setPage}
+        disabled={loading}
+      />
 
       {banTarget && (
         <ModalOverlay>
