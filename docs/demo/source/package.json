@@ -1,0 +1,15 @@
+{
+  "name": "admin-panel-demo-video",
+  "private": true,
+  "version": "1.0.0",
+  "dependencies": {
+    "@remotion/cli": "4.0.538",
+    "react": "19.1.0",
+    "react-dom": "19.1.0",
+    "remotion": "4.0.538"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.8",
+    "typescript": "5.8.3"
+  }
+}
