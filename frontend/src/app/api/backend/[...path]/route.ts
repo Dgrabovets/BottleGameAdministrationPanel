@@ -1,4 +1,8 @@
-import { buildSafeBackendUrl } from "@/lib/api-security";
+import {
+  buildSafeBackendUrl,
+  getRequestHost,
+  isSameOriginRequest,
+} from "@/lib/api-security";
 import { AUTH_COOKIE_NAME } from "@/lib/session";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
@@ -8,6 +12,12 @@ async function proxyRequest(
   request: NextRequest,
   pathSegments: string[],
 ): Promise<NextResponse> {
+  // The cookie is sameSite=lax, this check is a second line of defense for requests that change data
+  const changesData = request.method !== "GET" && request.method !== "HEAD";
+  if (changesData && !isSameOriginRequest(request, getRequestHost(request))) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const cookieStore = await cookies();
   const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;
 
@@ -35,6 +45,8 @@ async function proxyRequest(
     method: request.method,
     headers,
     redirect: "error",
+    // A hung API must not keep the server request open for ever
+    signal: AbortSignal.timeout(15_000),
   };
 
   if (request.method !== "GET" && request.method !== "HEAD") {
@@ -45,12 +57,20 @@ async function proxyRequest(
     const backendResponse = await fetch(targetUrl, init);
     const responseBody = await backendResponse.text();
 
+    const responseHeaders: Record<string, string> = {
+      "Content-Type":
+        backendResponse.headers.get("Content-Type") || "application/json",
+    };
+
+    // The size of the whole list when the page was asked for
+    const totalCount = backendResponse.headers.get("X-Total-Count");
+    if (totalCount) {
+      responseHeaders["X-Total-Count"] = totalCount;
+    }
+
     return new NextResponse(responseBody, {
       status: backendResponse.status,
-      headers: {
-        "Content-Type":
-          backendResponse.headers.get("Content-Type") || "application/json",
-      },
+      headers: responseHeaders,
     });
   } catch {
     return NextResponse.json({ error: "Backend unavailable" }, { status: 502 });

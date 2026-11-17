@@ -26,7 +26,7 @@ The dashboard for [Bottle Game API](https://github.com/Dgrabovets/BottleGameAPI)
 - **Withdrawals under control.** Approve or reject a request. A status can change only once, the API enforces it.
 - **Player moderation.** Search by Telegram id or name, ban and unban with a reason, and open a profile with rounds, transactions and referrals.
 - **Game tuning.** Edit win chances, multipliers and boosts, and set the lower threshold of the application balance.
-- **Roles.** Admins see everything, moderators do not see game settings or the staff list.
+- **Roles.** Admin and Moderator accounts exist. The panel hides the game settings and staff pages from moderators, and the API decides what each role may do (see [Known limitations](#known-limitations)).
 - **Safe by design.** The API token never reaches the browser, every request goes through a server-side proxy with an allow-list. See [How it talks to the API](#how-it-talks-to-the-api).
 - **Dark and light themes**, responsive layout.
 
@@ -125,6 +125,10 @@ docs/
   screenshots/    images used in this README
   demo/           walkthrough video and the Remotion project that renders it
 ```
+
+## Known limitations
+
+- **Moderators have almost no access today.** The API lets a moderator only approve or reject withdrawals; statistics, player and transaction lists and bans answer 403. The panel is meant to be used with an admin account until the API grants moderators more.
 
 ## Demo video
 
