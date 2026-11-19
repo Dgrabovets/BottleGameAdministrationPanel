@@ -10,9 +10,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?logo=tailwindcss&logoColor=white)
 
-[![Dashboard of the admin panel](docs/screenshots/dashboard.jpg)](docs/demo/admin-panel-demo-share.mp4)
-
-[Download the 36-second walkthrough](docs/demo/admin-panel-demo-share.mp4)
+https://github.com/user-attachments/assets/45655aaf-3bb4-4064-a1b0-69e406768144
 
 </div>
 
