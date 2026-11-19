@@ -3,8 +3,10 @@
 import { useIsMobile } from "@/hooks/use-mobile";
 import { createContext, useContext, useEffect, useState } from "react";
 
+/** Sidebar state: expanded or collapsed */
 type SidebarState = "expanded" | "collapsed";
 
+/** Value of the sidebar context */
 type SidebarContextType = {
   state: SidebarState;
   isOpen: boolean;
@@ -13,8 +15,10 @@ type SidebarContextType = {
   toggleSidebar: () => void;
 };
 
+/** Context that shares the sidebar state */
 const SidebarContext = createContext<SidebarContextType | null>(null);
 
+/** Returns the sidebar context, throws outside of the provider */
 export function useSidebarContext() {
   const context = useContext(SidebarContext);
   if (!context) {
@@ -23,6 +27,7 @@ export function useSidebarContext() {
   return context;
 }
 
+/** Provides the sidebar state to the layout */
 export function SidebarProvider({
   children,
   defaultOpen = true,

@@ -1,9 +1,11 @@
 import Link from "next/link";
 
+/** Props of the breadcrumb */
 interface BreadcrumbProps {
   pageName: string;
 }
 
+/** Page title with a breadcrumb trail */
 const Breadcrumb = ({ pageName }: BreadcrumbProps) => {
   return (
     <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -15,7 +17,7 @@ const Breadcrumb = ({ pageName }: BreadcrumbProps) => {
         <ol className="flex items-center gap-2">
           <li>
             <Link className="font-medium" href="/">
-              Панель /
+              Panel /
             </Link>
           </li>
           <li className="font-medium text-primary">{pageName}</li>

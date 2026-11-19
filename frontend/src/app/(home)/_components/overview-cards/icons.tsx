@@ -26,7 +26,14 @@ export function TreasureChest(props: SVGPropsType) {
         strokeWidth={2}
         strokeLinecap="round"
       />
-      <circle cx={29} cy={28.5} r={2.25} fill="#3FD97F" stroke="#fff" strokeWidth={1.5} />
+      <circle
+        cx={29}
+        cy={28.5}
+        r={2.25}
+        fill="#3FD97F"
+        stroke="#fff"
+        strokeWidth={1.5}
+      />
     </svg>
   );
 }

@@ -11,12 +11,15 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import type { ApexOptions } from "apexcharts";
 import dynamic from "next/dynamic";
 
+/** Chart component loaded on the client only, because ApexCharts needs the browser */
 const Chart = dynamic(() => import("react-apexcharts"), { ssr: false });
 
+/** Props of the income and deposits chart */
 type Props = {
   timeline: StatisticsTimeline;
 };
 
+/** Line chart of income and deposits over the selected period */
 export function IncomeDepositsChart({ timeline }: Props) {
   const isMobile = useIsMobile();
 
@@ -49,8 +52,7 @@ export function IncomeDepositsChart({ timeline }: Props) {
     },
     tooltip: {
       x: {
-        formatter: (value) =>
-          formatTooltipDate(Number(value), timeline.bucket),
+        formatter: (value) => formatTooltipDate(Number(value), timeline.bucket),
       },
       y: {
         formatter: (value) => formatRub(value),
@@ -61,17 +63,17 @@ export function IncomeDepositsChart({ timeline }: Props) {
   return (
     <div className="rounded-[10px] bg-white p-6 shadow-1 dark:bg-gray-dark">
       <h3 className="mb-4 text-base font-semibold text-dark dark:text-white">
-        Доход и пополнения
+        Income and deposits
       </h3>
       <Chart
         options={options}
         series={[
           {
-            name: "Доход",
+            name: "Income",
             data: toChartSeriesData(timeline, (point) => point.incomeAmount),
           },
           {
-            name: "Пополнения",
+            name: "Deposits",
             data: toChartSeriesData(timeline, (point) => point.depositsAmount),
           },
         ]}

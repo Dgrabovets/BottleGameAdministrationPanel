@@ -13,23 +13,48 @@ import { useEffect, useState } from "react";
 import { transactionsApi } from "@/api/transactionsApi";
 import { cn } from "@/lib/utils";
 import { PlayerTransactions } from "@/components/types";
+import { Pagination } from "@/components/ui/pagination";
+import {
+  TRANSACTION_STATUS,
+  TRANSACTION_TYPE,
+  statusLabel,
+  typeLabel,
+} from "@/lib/transactions";
 
+/** Deposits per page */
+const PAGE_SIZE = 20;
+
+/** Table of deposits, one page at a time */
 export function Deposits() {
   const [data, setData] = useState<PlayerTransactions[]>([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchWithdraws = async () => {
-      try {
-        const response = await transactionsApi.getTransactionsList();
-        setData(response);
-      } catch (err) {
-        console.error(err);
-      } finally {
-      }
-    };
+    let cancelled = false;
+    setLoading(true);
 
-    fetchWithdraws();
-  }, []);
+    transactionsApi
+      .getTransactionsList({
+        typeId: TRANSACTION_TYPE.deposit,
+        page,
+        pageSize: PAGE_SIZE,
+      })
+      .then((response) => {
+        if (cancelled) return;
+        setData(response.items);
+        setTotal(response.total);
+      })
+      .catch((err) => console.error(err))
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [page]);
 
   if (!data) {
     return <div></div>;
@@ -37,15 +62,16 @@ export function Deposits() {
 
   const formattedData = data.flatMap((playerData) =>
     playerData.transactions
-      .filter((transaction) => transaction.typeName === "Пополнение") // Фильтруем только "Вывод"
+      .filter((transaction) => transaction.typeId === TRANSACTION_TYPE.deposit)
       .map((transaction) => ({
         playerName: playerData.player.name,
         playerId: playerData.player.id,
         playerAvatar: getPlayerAvatarUrl(playerData.player),
         transactionId: transaction.id,
         amount: transaction.amount,
-        status: transaction.statusName,
-        type: transaction.typeName,
+        statusId: transaction.statusId,
+        status: statusLabel(transaction.statusId, transaction.statusName),
+        type: typeLabel(transaction.typeId, transaction.typeName),
         createdAt: transaction.createdAt,
         processedAt: transaction.processedAt,
       })),
@@ -55,19 +81,17 @@ export function Deposits() {
     <div className="rounded-[10px] border border-stroke bg-white shadow-1 dark:border-dark-3 dark:bg-gray-dark dark:shadow-card">
       <div className="px-6 py-4 sm:px-7 sm:py-5 xl:px-8.5">
         <h2 className="text-2xl font-bold text-dark dark:text-white">
-          Пополнения
+          Deposits
         </h2>
       </div>
       <Table>
         <TableHeader>
           <TableRow className="border-none bg-[#F7F9FC] dark:bg-dark-2 [&>th]:py-4 [&>th]:text-base [&>th]:text-dark [&>th]:dark:text-white">
-            <TableHead className="min-w-[155px] xl:pl-7.5">
-              Пользователь
-            </TableHead>
-            <TableHead className="min-w-[155px] xl:pl-7.5">Сумма</TableHead>
-            <TableHead>Дата пополнения</TableHead>
-            <TableHead className="min-w-[155px] xl:pl-7.5">Статус</TableHead>
-            <TableHead className="min-w-[155px] xl:pl-7.5">Операция</TableHead>
+            <TableHead className="min-w-[155px] xl:pl-7.5">User</TableHead>
+            <TableHead className="min-w-[155px] xl:pl-7.5">Amount</TableHead>
+            <TableHead>Deposit date</TableHead>
+            <TableHead className="min-w-[155px] xl:pl-7.5">Status</TableHead>
+            <TableHead className="min-w-[155px] xl:pl-7.5">Operation</TableHead>
           </TableRow>
         </TableHeader>
 
@@ -97,12 +121,12 @@ export function Deposits() {
               <TableCell>
                 <p className="font-medium text-dark dark:text-white">
                   {new Date(item.createdAt)
-                    .toLocaleDateString("ru-RU", {
+                    .toLocaleDateString("en-GB", {
                       day: "2-digit",
                       month: "2-digit",
                       year: "numeric",
                     })
-                    .replace(/\./g, "-")}
+                    .replace(/\//g, "-")}
                 </p>
               </TableCell>
 
@@ -112,11 +136,11 @@ export function Deposits() {
                     "max-w-fit rounded-full px-3.5 py-1 text-sm font-medium",
                     {
                       "bg-[#219653]/[0.08] text-[#219653]":
-                        item.status === "Оплачено",
+                        item.statusId === TRANSACTION_STATUS.approved,
                       "bg-[#D34053]/[0.08] text-[#D34053]":
-                        item.status === "Отклонено",
+                        item.statusId === TRANSACTION_STATUS.rejected,
                       "bg-[#FFA70B]/[0.08] text-[#FFA70B]":
-                        item.status === "Ожидает",
+                        item.statusId === TRANSACTION_STATUS.pending,
                     },
                   )}
                 >
@@ -128,6 +152,13 @@ export function Deposits() {
           ))}
         </TableBody>
       </Table>
+      <Pagination
+        page={page}
+        pageSize={PAGE_SIZE}
+        total={total}
+        onChange={setPage}
+        disabled={loading}
+      />
     </div>
   );
 }

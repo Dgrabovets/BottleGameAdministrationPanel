@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import * as React from "react";
 
+/** Table wrapper with horizontal scrolling */
 export function Table({
   className,
   ...props
@@ -15,6 +16,7 @@ export function Table({
   );
 }
 
+/** Table header */
 export function TableHeader({
   className,
   ...props
@@ -22,6 +24,7 @@ export function TableHeader({
   return <thead className={cn("[&_tr]:border-b", className)} {...props} />;
 }
 
+/** Table body */
 export function TableBody({
   className,
   ...props
@@ -31,6 +34,7 @@ export function TableBody({
   );
 }
 
+/** Table footer */
 export function TableFooter({
   className,
   ...props
@@ -46,6 +50,7 @@ export function TableFooter({
   );
 }
 
+/** Table row */
 export function TableRow({
   className,
   ...props
@@ -61,6 +66,7 @@ export function TableRow({
   );
 }
 
+/** Table header cell */
 export function TableHead({
   className,
   ...props
@@ -76,6 +82,7 @@ export function TableHead({
   );
 }
 
+/** Table cell */
 export function TableCell({
   className,
   ...props

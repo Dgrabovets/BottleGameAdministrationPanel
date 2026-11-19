@@ -14,21 +14,38 @@ import { ConfirmIcon, CancelIcon } from "../icons";
 import { useEffect, useState } from "react";
 import { transactionsApi } from "@/api/transactionsApi";
 import { PlayerTransactions } from "@/components/types";
+import { Pagination } from "@/components/ui/pagination";
+import {
+  TRANSACTION_STATUS,
+  TRANSACTION_TYPE,
+  statusLabel,
+  typeLabel,
+} from "@/lib/transactions";
 
+/** Withdrawal requests per page */
+const PAGE_SIZE = 20;
+
+/** Table of withdrawal requests with approve and reject actions, one page at a time */
 export function Withdraws() {
   const [data, setData] = useState<PlayerTransactions[]>([]);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
   const [formattedData, setFormattedData] = useState(() =>
     data.flatMap((playerData) =>
       playerData.transactions
-        .filter((transaction) => transaction.typeName === "Вывод")
+        .filter(
+          (transaction) => transaction.typeId === TRANSACTION_TYPE.withdrawal,
+        )
         .map((transaction) => ({
           playerName: playerData.player.name,
           playerId: playerData.player.id,
           playerAvatar: getPlayerAvatarUrl(playerData.player),
           transactionId: transaction.id,
           amount: transaction.amount,
-          status: transaction.statusName,
-          type: transaction.typeName,
+          statusId: transaction.statusId,
+          status: statusLabel(transaction.statusId, transaction.statusName),
+          type: typeLabel(transaction.typeId, transaction.typeName),
           createdAt: transaction.createdAt,
           processedAt: transaction.processedAt,
         })),
@@ -38,15 +55,18 @@ export function Withdraws() {
   useEffect(() => {
     const formatted = data.flatMap((playerData) =>
       playerData.transactions
-        .filter((transaction) => transaction.typeName === "Вывод")
+        .filter(
+          (transaction) => transaction.typeId === TRANSACTION_TYPE.withdrawal,
+        )
         .map((transaction) => ({
           playerName: playerData.player.name,
           playerId: playerData.player.id,
           playerAvatar: getPlayerAvatarUrl(playerData.player),
           transactionId: transaction.id,
           amount: transaction.amount,
-          status: transaction.statusName,
-          type: transaction.typeName,
+          statusId: transaction.statusId,
+          status: statusLabel(transaction.statusId, transaction.statusName),
+          type: typeLabel(transaction.typeId, transaction.typeName),
           createdAt: transaction.createdAt,
           processedAt: transaction.processedAt,
         })),
@@ -56,18 +76,29 @@ export function Withdraws() {
   }, [data]);
 
   useEffect(() => {
-    const fetchWithdraws = async () => {
-      try {
-        const response = await transactionsApi.getTransactionsList();
-        setData(response);
-      } catch (err) {
-        console.error(err);
-      } finally {
-      }
-    };
+    let cancelled = false;
+    setLoading(true);
 
-    fetchWithdraws();
-  }, []);
+    transactionsApi
+      .getTransactionsList({
+        typeId: TRANSACTION_TYPE.withdrawal,
+        page,
+        pageSize: PAGE_SIZE,
+      })
+      .then((response) => {
+        if (cancelled) return;
+        setData(response.items);
+        setTotal(response.total);
+      })
+      .catch((err) => console.error(err))
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [page]);
 
   const handleStatusUpdate = async (
     transactionId: number,
@@ -81,21 +112,17 @@ export function Withdraws() {
           transaction.transactionId === transactionId
             ? {
                 ...transaction,
-                status:
-                  statusId === 2
-                    ? "Одобрено"
-                    : statusId === 3
-                      ? "Отклонено"
-                      : transaction.status,
+                statusId,
+                status: statusLabel(statusId, transaction.status),
                 processedAt: new Date().toISOString(),
               }
             : transaction,
         ),
       );
 
-      console.log(`Статус транзакции ${transactionId} обновлён на ${statusId}`);
+      console.log(`Transaction ${transactionId} status updated to ${statusId}`);
     } catch (error) {
-      console.error("Ошибка при обновлении статуса:", error);
+      console.error("Failed to update the status:", error);
     }
   };
 
@@ -107,20 +134,18 @@ export function Withdraws() {
     <div className="rounded-[10px] border border-stroke bg-white shadow-1 dark:border-dark-3 dark:bg-gray-dark dark:shadow-card">
       <div className="px-6 py-4 sm:px-7 sm:py-5 xl:px-8.5">
         <h2 className="text-2xl font-bold text-dark dark:text-white">
-          Запросы на вывод
+          Withdrawal requests
         </h2>
       </div>
       <Table>
         <TableHeader>
           <TableRow className="border-none bg-[#F7F9FC] dark:bg-dark-2 [&>th]:py-4 [&>th]:text-base [&>th]:text-dark [&>th]:dark:text-white">
-            <TableHead className="min-w-[155px] xl:pl-7.5">
-              Пользователь
-            </TableHead>
-            <TableHead className="min-w-[155px] xl:pl-7.5">Сумма</TableHead>
-            <TableHead>Дата запроса</TableHead>
-            <TableHead>Статус</TableHead>
-            <TableHead>Операция</TableHead>
-            <TableHead className="text-right xl:pr-7.5">Действия</TableHead>
+            <TableHead className="min-w-[155px] xl:pl-7.5">User</TableHead>
+            <TableHead className="min-w-[155px] xl:pl-7.5">Amount</TableHead>
+            <TableHead>Request date</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead>Operation</TableHead>
+            <TableHead className="text-right xl:pr-7.5">Actions</TableHead>
           </TableRow>
         </TableHeader>
 
@@ -150,12 +175,12 @@ export function Withdraws() {
               <TableCell>
                 <p className="font-medium text-dark dark:text-white">
                   {new Date(item.createdAt)
-                    .toLocaleDateString("ru-RU", {
+                    .toLocaleDateString("en-GB", {
                       day: "2-digit",
                       month: "2-digit",
                       year: "numeric",
                     })
-                    .replace(/\./g, "-")}
+                    .replace(/\//g, "-")}
                 </p>
               </TableCell>
 
@@ -165,11 +190,11 @@ export function Withdraws() {
                     "max-w-fit rounded-full px-3.5 py-1 text-sm font-medium",
                     {
                       "bg-[#219653]/[0.08] text-[#219653]":
-                        item.status === "Одобрено",
+                        item.statusId === TRANSACTION_STATUS.approved,
                       "bg-[#D34053]/[0.08] text-[#D34053]":
-                        item.status === "Отклонено",
+                        item.statusId === TRANSACTION_STATUS.rejected,
                       "bg-[#FFA70B]/[0.08] text-[#FFA70B]":
-                        item.status === "Ожидание",
+                        item.statusId === TRANSACTION_STATUS.pending,
                     },
                   )}
                 >
@@ -180,13 +205,13 @@ export function Withdraws() {
               <TableCell>{item.type}</TableCell>
 
               <TableCell className="xl:pr-7.5">
-                {item.status == "Ожидание" && (
+                {item.statusId === TRANSACTION_STATUS.pending && (
                   <div className="flex items-center justify-end gap-x-3.5">
                     <button
                       className="group rounded-md p-1.5 transition-colors duration-150 hover:bg-[#fcebed]"
                       onClick={() => handleStatusUpdate(item.transactionId, 3)}
                     >
-                      <span className="sr-only">Отклонить</span>
+                      <span className="sr-only">Reject</span>
                       <CancelIcon className="group-hover:text-[#D34053]" />
                     </button>
 
@@ -194,7 +219,7 @@ export function Withdraws() {
                       className="group rounded-md p-1.5 transition-colors duration-150 hover:bg-[#e7f6ee]"
                       onClick={() => handleStatusUpdate(item.transactionId, 2)}
                     >
-                      <span className="sr-only">Подтвердить</span>
+                      <span className="sr-only">Approve</span>
                       <ConfirmIcon className="group-hover:text-[#219653]" />
                     </button>
                   </div>
@@ -204,6 +229,13 @@ export function Withdraws() {
           ))}
         </TableBody>
       </Table>
+      <Pagination
+        page={page}
+        pageSize={PAGE_SIZE}
+        total={total}
+        onChange={setPage}
+        disabled={loading}
+      />
     </div>
   );
 }

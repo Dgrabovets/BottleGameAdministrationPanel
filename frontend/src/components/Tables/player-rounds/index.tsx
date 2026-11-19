@@ -10,10 +10,12 @@ import { cn } from "@/lib/utils";
 import { PlayerData } from "@/components/types";
 import { useState } from "react";
 
+/** Props of the rounds table */
 interface PlayerRoundsProps {
   data: PlayerData;
 }
 
+/** Table of the rounds of a player */
 export function PlayerRoundsTable({ data }: PlayerRoundsProps) {
   const isValidUrl = (url: string) => {
     try {
@@ -28,18 +30,18 @@ export function PlayerRoundsTable({ data }: PlayerRoundsProps) {
     <div className="rounded-[10px] border border-stroke bg-white shadow-1 dark:border-dark-3 dark:bg-gray-dark dark:shadow-card">
       <div className="px-6 py-4 sm:px-7 sm:py-5 xl:px-8.5">
         <h2 className="text-2xl font-bold text-dark dark:text-white">
-          История раундов
+          Round history
         </h2>
       </div>
       <Table>
         <TableHeader>
           <TableRow className="border-none bg-[#F7F9FC] dark:bg-dark-2 [&>th]:py-4 [&>th]:text-base [&>th]:text-dark [&>th]:dark:text-white">
             {/* <TableHead className="min-w-[155px] xl:pl-7.5">
-              Пользователь
+              User
             </TableHead> */}
-            <TableHead className="min-w-[155px] xl:pl-7.5">Сумма</TableHead>
-            <TableHead>Дата окончания</TableHead>
-            <TableHead>Статус</TableHead>
+            <TableHead className="min-w-[155px] xl:pl-7.5">Amount</TableHead>
+            <TableHead>End date</TableHead>
+            <TableHead>Status</TableHead>
           </TableRow>
         </TableHeader>
 
@@ -56,7 +58,7 @@ export function PlayerRoundsTable({ data }: PlayerRoundsProps) {
               <TableCell>
                 <p className="font-medium text-dark dark:text-white">
                   {new Date(item.finishedAt)
-                    .toLocaleString("ru-RU", {
+                    .toLocaleString("en-GB", {
                       day: "2-digit",
                       month: "2-digit",
                       year: "numeric",
@@ -78,7 +80,7 @@ export function PlayerRoundsTable({ data }: PlayerRoundsProps) {
                     },
                   )}
                 >
-                  {item.isWin ? "Победа" : "Проигрыш"}
+                  {item.isWin ? "Win" : "Loss"}
                 </div>
               </TableCell>
             </TableRow>

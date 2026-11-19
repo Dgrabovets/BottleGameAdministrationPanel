@@ -22,3 +22,7 @@ Desktop.ini
 
 # Local logs at repo root
 *.log
+
+# Demo video: the full-quality render and generated files stay local
+docs/demo/admin-panel-demo.mp4
+docs/demo/*.gif

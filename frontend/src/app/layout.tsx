@@ -5,7 +5,6 @@ import "@/css/style.css";
 import { Sidebar } from "@/components/Layouts/sidebar";
 
 import "flatpickr/dist/flatpickr.min.css";
-import "jsvectormap/dist/jsvectormap.css";
 
 import { Header } from "@/components/Layouts/header";
 import NextTopLoader from "nextjs-toploader";
@@ -15,12 +14,13 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { usePathname } from "next/navigation";
 
+/** Root layout: theme, session, sidebar and header */
 export default function RootLayout({ children }: PropsWithChildren) {
   const pathname = usePathname();
   const isAuthPage = pathname === "/login" || pathname === "/logout";
 
   return (
-    <html lang="ru" suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
       <body>
         <Providers>
           <NextTopLoader showSpinner={false} />

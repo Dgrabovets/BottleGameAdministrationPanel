@@ -14,6 +14,7 @@ import PlayerTransactions from "./_components/player-transactions";
 import PlayerRefferal from "./_components/player-refferal";
 import { ModalOverlay } from "@/components/ui/modal-overlay";
 
+/** Player page: profile, balance, moderation, rounds, transactions and referrals */
 export default function SettingsPage() {
   const { id } = useParams();
   const idString = Array.isArray(id) ? id[0] : id;
@@ -22,6 +23,8 @@ export default function SettingsPage() {
   const [transactionsData, setTransactionsData] = useState<PlayerData>();
 
   const [name, setName] = useState("");
+  // Changing the balance directly is only for debugging and is disabled in the production build
+  const canEditBalance = process.env.NODE_ENV !== "production";
   const [balance, setBalance] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
   const [winChance, setWinChance] = useState<number>(0);
@@ -108,11 +111,11 @@ export default function SettingsPage() {
 
     const reason = banReason.trim();
     if (!reason) {
-      setBanError("Укажите причину бана");
+      setBanError("Enter the ban reason");
       return;
     }
     if (reason.length > 255) {
-      setBanError("Причина не должна превышать 255 символов");
+      setBanError("The reason must not exceed 255 characters");
       return;
     }
 
@@ -124,7 +127,7 @@ export default function SettingsPage() {
       await loadPlayer();
     } catch (err) {
       console.error(err);
-      setBanError("Не удалось забанить игрока");
+      setBanError("Failed to ban the player");
     } finally {
       setModerationLoading(false);
     }
@@ -153,13 +156,13 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto w-full max-w-[1080px]">
-      <Breadcrumb pageName={`Пользователь №${id}`} />
+      <Breadcrumb pageName={`User #${id}`} />
 
       <div className="grid grid-cols-5 gap-8 xl:items-stretch">
         <div className="col-span-5 flex xl:col-span-3">
           <ShowcaseSection
-            title="Информация пользователя"
-            className="!p-7 flex w-full flex-col"
+            title="User information"
+            className="flex w-full flex-col !p-7"
           >
             <form className="flex flex-1 flex-col">
               <div className="mb-5.5 flex flex-col gap-5.5 sm:flex-row">
@@ -167,8 +170,8 @@ export default function SettingsPage() {
                   className="w-full sm:w-1/2"
                   type="text"
                   name="fullName"
-                  label="Имя пользователя"
-                  placeholder="Имя пользователя"
+                  label="Username"
+                  placeholder="Username"
                   value={name}
                   handleChange={(e) => setName(e.target.value)}
                   icon={<UserIcon />}
@@ -180,8 +183,8 @@ export default function SettingsPage() {
                   className="w-full sm:w-1/2"
                   type="url"
                   name="profileImgUrl"
-                  placeholder="Ссылка на аватар пользователя"
-                  label="Аватар пользователя"
+                  placeholder="User avatar link"
+                  label="User avatar"
                   value={avatarUrl}
                   handleChange={(e) => setAvatarUrl(e.target.value)}
                   disabled={isDisabled}
@@ -193,8 +196,8 @@ export default function SettingsPage() {
                   className="w-full sm:w-1/2"
                   type="number"
                   name="profileImgUrl"
-                  placeholder="Шанс выигрыша пользователя"
-                  label="Шанс выигрыша"
+                  placeholder="User win chance"
+                  label="Win chance"
                   value={winChance}
                   handleChange={(e) => setWinChance(Number(e.target.value))}
                   disabled={isDisabled}
@@ -208,7 +211,7 @@ export default function SettingsPage() {
                     type="button"
                     onClick={() => onPlayerUpdate()}
                   >
-                    Сохранить
+                    Save
                   </button>
                 )}
               </div>
@@ -218,30 +221,36 @@ export default function SettingsPage() {
 
         <div className="col-span-5 flex flex-col gap-8 xl:col-span-2">
           <ShowcaseSection
-            title="Баланс"
-            className="!p-7 flex flex-1 flex-col"
+            title={canEditBalance ? "Balance (debug)" : "Balance"}
+            className="flex flex-1 flex-col !p-7"
           >
+            {canEditBalance && (
+              <p className="mb-4 rounded-lg bg-[#FFA70B]/[0.08] px-3 py-2 text-sm text-[#FFA70B]">
+                For debugging only: the balance is changed directly, without a
+                transaction. In a production build this field is read-only.
+              </p>
+            )}
             <div className="mb-5.5 flex-1">
               <InputGroup
                 className="w-full"
                 type="number"
                 name="balance"
-                label="Текущий баланс"
+                label="Current balance"
                 placeholder="0.00"
                 value={balance}
                 handleChange={(e) => setBalance(e.target.value)}
-                disabled={isDisabled}
+                disabled={isDisabled || !canEditBalance}
                 height="sm"
               />
             </div>
-            {!isDisabled && (
+            {canEditBalance && !isDisabled && (
               <div className="mt-auto flex justify-end">
                 <button
                   className="rounded-lg bg-primary px-6 py-[7px] font-medium text-gray-2 hover:bg-opacity-90"
                   type="button"
                   onClick={onBalanceUpdate}
                 >
-                  Сохранить баланс
+                  Save balance
                 </button>
               </div>
             )}
@@ -249,19 +258,19 @@ export default function SettingsPage() {
 
           {!isDisabled && (
             <ShowcaseSection
-              title="Модерация"
-              className="!p-7 flex flex-1 flex-col justify-center"
+              title="Moderation"
+              className="flex flex-1 flex-col justify-center !p-7"
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="flex flex-wrap items-center gap-2">
                   {isBanned ? (
                     <>
                       <span className="rounded-full bg-[#D34053]/[0.08] px-3 py-1 text-sm font-medium text-[#D34053]">
-                        Забанен
+                        Banned
                       </span>
                       <span className="text-sm text-dark-6">
-                        с{" "}
-                        {new Date(data.bannedAt!).toLocaleDateString("ru-RU", {
+                        since{" "}
+                        {new Date(data.bannedAt!).toLocaleDateString("en-GB", {
                           day: "2-digit",
                           month: "2-digit",
                           year: "numeric",
@@ -269,7 +278,7 @@ export default function SettingsPage() {
                       </span>
                     </>
                   ) : (
-                    <span className="text-sm text-dark-6">Статус: активен</span>
+                    <span className="text-sm text-dark-6">Status: active</span>
                   )}
                 </div>
 
@@ -283,7 +292,7 @@ export default function SettingsPage() {
                       moderationLoading && "cursor-not-allowed opacity-50",
                     )}
                   >
-                    Разбанить
+                    Unban
                   </button>
                 ) : (
                   <button
@@ -299,7 +308,7 @@ export default function SettingsPage() {
                       moderationLoading && "cursor-not-allowed opacity-50",
                     )}
                   >
-                    Забанить
+                    Ban
                   </button>
                 )}
               </div>
@@ -323,14 +332,14 @@ export default function SettingsPage() {
               id="ban-dialog-title"
               className="mb-1 text-lg font-bold text-dark dark:text-white"
             >
-              Забанить игрока
+              Ban player
             </h3>
             <p className="mb-4 text-sm text-dark-6">
               {data.player.name} (ID {data.player.telegramId})
             </p>
 
             <label className="mb-2 block text-sm font-medium text-dark dark:text-white">
-              Причина бана
+              Ban reason
             </label>
             <textarea
               value={banReason}
@@ -338,7 +347,7 @@ export default function SettingsPage() {
               rows={3}
               maxLength={255}
               className="mb-2 w-full rounded-lg border border-stroke bg-transparent px-4 py-2 text-sm text-dark outline-none focus:border-primary dark:border-dark-3 dark:text-white"
-              placeholder="Опишите причину"
+              placeholder="Describe the reason"
             />
             {banError && (
               <p className="mb-3 text-sm text-[#D34053]">{banError}</p>
@@ -350,7 +359,7 @@ export default function SettingsPage() {
                 onClick={closeBanModal}
                 className="inline-flex h-10 items-center justify-center rounded-lg border border-stroke px-4 text-sm font-medium text-dark transition hover:bg-gray-2 dark:border-dark-3 dark:text-white"
               >
-                Отмена
+                Cancel
               </button>
               <button
                 type="button"
@@ -358,7 +367,7 @@ export default function SettingsPage() {
                 disabled={moderationLoading}
                 className="inline-flex h-10 items-center justify-center rounded-lg bg-[#D34053] px-4 text-sm font-semibold text-white transition hover:bg-[#D34053]/90 disabled:opacity-50"
               >
-                Забанить
+                Ban
               </button>
             </div>
           </div>

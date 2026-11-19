@@ -3,16 +3,15 @@ import {
   isPrivateOrReservedHost,
   isSafeImageContentType,
 } from "@/lib/api-security";
-import {
-  isAllowedAvatarHost,
-  normalizeAvatarUrl,
-} from "@/lib/player-avatar";
+import { isAllowedAvatarHost, normalizeAvatarUrl } from "@/lib/player-avatar";
 import { AUTH_COOKIE_NAME } from "@/lib/session";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
+/** Maximum number of redirects followed when fetching an avatar */
 const MAX_REDIRECTS = 3;
 
+/** Fetches an avatar and follows redirects manually, checking every hop against the host rules */
 async function fetchAvatarWithRedirects(
   startUrl: string,
 ): Promise<Response | null> {
@@ -49,6 +48,7 @@ async function fetchAvatarWithRedirects(
   return null;
 }
 
+/** Avatar proxy: downloads an allowed external image and serves it from this origin */
 export async function GET(request: NextRequest) {
   const cookieStore = await cookies();
   const token = cookieStore.get(AUTH_COOKIE_NAME)?.value;

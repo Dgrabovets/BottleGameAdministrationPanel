@@ -1,22 +1,14 @@
 import apiClient from "./axiosInstance";
-import { playersApi } from "@/api/playersApi";
 import { GameSettings } from "@/components/types";
-import {
-  filterTransactionsByBannedIds,
-  loadRawTransactionsList,
-  recalculateStatisticsExcludingBanned,
-  resolveBannedPlayerIdsFromData,
-} from "@/lib/exclude-banned";
-import type {
-  AppStatistics,
-  StatisticsTimeline,
-} from "@/lib/statistics-types";
+import type { AppStatistics, StatisticsTimeline } from "@/lib/statistics-types";
 
+/** Period of the statistics request */
 type StatisticsParams = {
   dateFrom: string;
   dateTill: string;
 };
 
+/** Maps the statistics response to AppStatistics, accepting camelCase and PascalCase */
 function normalizeStatistics(data: Record<string, unknown>): AppStatistics {
   return {
     usersTotal: Number(data.usersTotal ?? data.UsersTotal ?? 0),
@@ -37,6 +29,7 @@ function normalizeStatistics(data: Record<string, unknown>): AppStatistics {
   };
 }
 
+/** Maps a single timeline point of the response, accepting camelCase and PascalCase */
 function normalizeTimelinePoint(
   point: Record<string, unknown>,
 ): StatisticsTimeline["points"][number] {
@@ -51,6 +44,7 @@ function normalizeTimelinePoint(
   };
 }
 
+/** Maps the timeline response to StatisticsTimeline */
 function normalizeTimeline(data: Record<string, unknown>): StatisticsTimeline {
   const rawPoints = (data.points ?? data.Points ?? []) as Record<
     string,
@@ -65,59 +59,7 @@ function normalizeTimeline(data: Record<string, unknown>): StatisticsTimeline {
   };
 }
 
-async function loadBannedAwareData() {
-  const [activePlayers, rawTransactions] = await Promise.all([
-    playersApi.getPlayersList(),
-    loadRawTransactionsList(),
-  ]);
-
-  const bannedIds = resolveBannedPlayerIdsFromData({
-    activePlayers,
-    rawTransactions,
-  });
-
-  const transactions = filterTransactionsByBannedIds(
-    rawTransactions,
-    bannedIds,
-  );
-
-  return { activePlayers, transactions, bannedIds };
-}
-
-async function applyBannedExclusion(
-  stats: AppStatistics,
-  params?: StatisticsParams,
-): Promise<AppStatistics> {
-  const { activePlayers, transactions, bannedIds } =
-    await loadBannedAwareData();
-
-  if (bannedIds.size === 0) {
-    return stats;
-  }
-
-  const recalculated = recalculateStatisticsExcludingBanned(
-    transactions,
-    activePlayers,
-    params,
-  );
-
-  return {
-    ...stats,
-    usersTotal: recalculated.usersTotal,
-    depositsTotal: recalculated.depositsTotal,
-    withdrawalsTotal: recalculated.withdrawalsTotal,
-    incomeTotal: recalculated.incomeTotal,
-    balancesTotal:
-      recalculated.balancesTotal !== undefined
-        ? recalculated.balancesTotal
-        : stats.balancesTotal,
-    pendingWithdrawalsTotal:
-      recalculated.pendingWithdrawalsTotal !== undefined
-        ? recalculated.pendingWithdrawalsTotal
-        : stats.pendingWithdrawalsTotal,
-  };
-}
-
+/** API calls for the statistics, the game settings and the application balance */
 export const settingsApi = {
   getSettingsList: async () => {
     const response = await apiClient.get<GameSettings>(
@@ -139,14 +81,13 @@ export const settingsApi = {
       });
       return response.data;
     } catch (error) {
-      console.error("Ошибка при обновлении порога:", error);
+      console.error("Failed to update the threshold:", error);
       throw error;
     }
   },
   getStatistics: async (params?: StatisticsParams): Promise<AppStatistics> => {
     const response = await apiClient.get("/Admin/get-statistics", { params });
-    const stats = normalizeStatistics(response.data);
-    return applyBannedExclusion(stats, params);
+    return normalizeStatistics(response.data);
   },
   getStatisticsTimeline: async (
     params: StatisticsParams,

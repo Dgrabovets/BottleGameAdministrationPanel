@@ -3,10 +3,12 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
+/** Props of the modal overlay */
 type ModalOverlayProps = {
   children: ReactNode;
 };
 
+/** Dark overlay that centers a modal window */
 export function ModalOverlay({ children }: ModalOverlayProps) {
   const [mounted, setMounted] = useState(false);
 

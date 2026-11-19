@@ -1,5 +1,6 @@
 import axios from "axios";
 
+/** Axios client for the backend API, goes through the server proxy */
 const apiClient = axios.create({
   baseURL: "/api/backend",
   headers: {

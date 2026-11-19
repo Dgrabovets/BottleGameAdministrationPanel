@@ -1,0 +1,37 @@
+version: 2
+
+updates:
+  # npm packages: one weekly pull request per group. Major versions are skipped on purpose,
+  # because a jump in Next.js, React or Tailwind needs a manual migration
+  - package-ecosystem: npm
+    directory: /frontend
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    groups:
+      react-and-next:
+        patterns:
+          - next
+          - eslint-config-next
+          - react
+          - react-dom
+          - "@types/react*"
+      tooling:
+        patterns:
+          - eslint*
+          - prettier*
+          - typescript
+          - "@types/node"
+          - tailwindcss
+          - postcss
+          - autoprefixer
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday

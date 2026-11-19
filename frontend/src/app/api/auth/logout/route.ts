@@ -2,6 +2,7 @@ import { getRequestHost, isSameOriginRequest } from "@/lib/api-security";
 import { AUTH_COOKIE_NAME } from "@/lib/session";
 import { NextRequest, NextResponse } from "next/server";
 
+/** Logs out through POST: clears the session cookie */
 export async function POST(request: NextRequest) {
   const host = getRequestHost(request);
   if (!isSameOriginRequest(request, host)) {
@@ -19,6 +20,7 @@ export async function POST(request: NextRequest) {
   return response;
 }
 
+/** Logs out through GET: clears the session cookie and redirects to the login page */
 export async function GET() {
   return NextResponse.json({ error: "Method not allowed" }, { status: 405 });
 }

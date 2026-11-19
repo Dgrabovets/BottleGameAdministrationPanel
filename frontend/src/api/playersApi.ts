@@ -1,19 +1,19 @@
 import axios from "axios";
 import apiClient from "./axiosInstance";
 import { PlayerData } from "@/components/types";
-import {
-  filterNonBannedPlayersForDefaultList,
-  filterPlayersBySearch,
-  forgetBannedPlayerId,
-  rememberBannedPlayerId,
-} from "@/lib/exclude-banned";
+import { readTotalCount, type Page } from "@/lib/paging";
 
+/** Query parameters of the players list */
 export type PlayersListParams = {
   q?: string;
   telegramId?: number;
   name?: string;
+  /** Page number from 1, the whole list when omitted */
+  page?: number;
+  pageSize?: number;
 };
 
+/** Builds the URL of the players list from the query parameters */
 function buildPlayersListUrl(params?: PlayersListParams): string {
   const searchParams = new URLSearchParams();
 
@@ -28,56 +28,51 @@ function buildPlayersListUrl(params?: PlayersListParams): string {
     }
   }
 
+  if (params?.page != null) {
+    searchParams.set("page", String(params.page));
+  }
+  if (params?.pageSize != null) {
+    searchParams.set("pageSize", String(params.pageSize));
+  }
+
   const query = searchParams.toString();
   return query ? `/Player/get-all-players?${query}` : "/Player/get-all-players";
 }
 
-function normalizeSearchParams(params?: PlayersListParams): PlayersListParams | undefined {
-  if (!params) return undefined;
+/** Trims the search parameters, drops the empty ones and keeps the paging */
+function normalizeSearchParams(params?: PlayersListParams): PlayersListParams {
+  const paging = { page: params?.page, pageSize: params?.pageSize };
 
-  if (params.q?.trim()) {
-    return { q: params.q.trim().replace(/^@+/, "") };
+  if (params?.q?.trim()) {
+    return { q: params.q.trim().replace(/^@+/, ""), ...paging };
   }
 
-  if (params.telegramId != null) {
-    return { telegramId: params.telegramId };
+  if (params?.telegramId != null) {
+    return { telegramId: params.telegramId, ...paging };
   }
 
-  if (params.name?.trim()) {
-    return { name: params.name.trim().replace(/^@+/, "") };
+  if (params?.name?.trim()) {
+    return { name: params.name.trim().replace(/^@+/, ""), ...paging };
   }
 
-  return undefined;
+  return paging;
 }
 
+/** API calls for players, bans and the player balance */
 export const playersApi = {
+  /** Loads the players, one page when page or pageSize is given. Without a search banned players are left out by the API */
   getPlayersList: async (
     params?: PlayersListParams,
-  ): Promise<PlayerData[]> => {
-    const normalized = normalizeSearchParams(params);
-
+  ): Promise<Page<PlayerData>> => {
     try {
       const response = await apiClient.get<PlayerData[]>(
-        buildPlayersListUrl(normalized),
+        buildPlayersListUrl(normalizeSearchParams(params)),
       );
-      const players = response.data ?? [];
-
-      let result = players;
-
-      if (normalized?.q) {
-        result = filterPlayersBySearch(players, normalized.q);
-      } else if (normalized?.telegramId != null) {
-        result = players.filter(
-          (player) => player.player.telegramId === normalized.telegramId,
-        );
-      } else if (normalized?.name) {
-        result = filterPlayersBySearch(players, normalized.name);
-      }
-
-      return filterNonBannedPlayersForDefaultList(result, normalized != null);
+      const items = response.data ?? [];
+      return { items, total: readTotalCount(response.headers, items.length) };
     } catch (error) {
       if (axios.isAxiosError(error) && error.response?.status === 404) {
-        return normalized ? [] : [];
+        return { items: [], total: 0 };
       }
       throw error;
     }
@@ -87,21 +82,17 @@ export const playersApi = {
       playerId,
       banReason,
     });
-    rememberBannedPlayerId(playerId);
     return response.data;
   },
   unbanPlayer: async (playerId: number) => {
-    const response = await apiClient.post(
-      `/Player/unban-player/${playerId}`,
-    );
-    forgetBannedPlayerId(playerId);
+    const response = await apiClient.post(`/Player/unban-player/${playerId}`);
     return response.data;
   },
   getPlayersTop100: async (): Promise<PlayerData[]> => {
     const response = await apiClient.get<PlayerData[]>(
       "/Player/get-top100-players",
     );
-    return filterNonBannedPlayersForDefaultList(response.data ?? [], false);
+    return response.data ?? [];
   },
   getPlayerDetails: async (playerId: Number): Promise<PlayerData> => {
     const response = await apiClient.get<PlayerData>(
@@ -131,14 +122,13 @@ export const playersApi = {
   },
 
   /**
-   * Обновление баланса игрока (только для админа).
-   * Отправляет только поле balance, остальные поля null.
+   * Updates the player balance (admin only)
+   * Sends only the balance field, the other fields are null
    */
   editPlayerBalance: async (playerId: number, balance: number) => {
-    const response = await apiClient.post(
-      `/Player/edit-player/${playerId}`,
-      { balance },
-    );
+    const response = await apiClient.post(`/Player/edit-player/${playerId}`, {
+      balance,
+    });
     return response.data;
   },
   registerModerator: async (login: string, password: string) => {

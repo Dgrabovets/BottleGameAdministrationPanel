@@ -1,47 +1,52 @@
 import * as Icons from "../icons";
 
+/** One item of the sidebar menu */
 type MenuItemType = {
   title: string;
   url?: string;
   items: { url: string }[];
   icon: React.ComponentType<React.SVGProps<SVGSVGElement>>;
+  /** Hidden from moderators */
+  adminOnly?: boolean;
 };
 
+/** One section of the sidebar menu */
 type SectionType = {
   label: string;
   items: MenuItemType[];
 };
 
+/** Navigation of the sidebar */
 export const NAV_DATA: SectionType[] = [
   {
-    label: "Главное меню",
+    label: "Main menu",
     items: [
       {
-        title: "Главная",
+        title: "Home",
         icon: Icons.HomeIcon,
         url: "/",
         items: [],
       },
       {
-        title: "Игроки",
+        title: "Players",
         icon: Icons.User,
         url: "/players",
         items: [],
       },
       {
-        title: "Вывод средств",
+        title: "Withdrawals",
         icon: Icons.Withdraw,
         url: "/withdraws",
         items: [],
       },
       {
-        title: "Пополнение баланса",
+        title: "Deposits",
         url: "/deposits",
         icon: Icons.Wallet,
         items: [],
       },
       {
-        title: "Топ-100 Игроков",
+        title: "Top 100 players",
         icon: Icons.Alphabet,
         url: "/top-players",
         items: [],
@@ -49,19 +54,21 @@ export const NAV_DATA: SectionType[] = [
     ],
   },
   {
-    label: "Другое",
+    label: "Other",
     items: [
       {
-        title: "Настройки игры",
+        title: "Game settings",
         icon: Icons.FourCircle,
         url: "/settings",
         items: [],
+        adminOnly: true,
       },
       {
-        title: "Модераторы",
+        title: "Moderators",
         icon: Icons.User,
         url: "/moderators",
         items: [],
+        adminOnly: true,
       },
     ],
   },

@@ -1,12 +1,14 @@
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
+/** Props of the showcase section */
 type PropsType = {
   title: string;
   children: ReactNode;
   className?: string;
 };
 
+/** Titled card that wraps a block of content */
 export function ShowcaseSection({ title, children, className }: PropsType) {
   return (
     <div className="rounded-[10px] bg-white shadow-1 dark:bg-gray-dark dark:shadow-card">

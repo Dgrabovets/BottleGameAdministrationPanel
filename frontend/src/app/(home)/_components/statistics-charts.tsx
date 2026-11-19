@@ -2,11 +2,13 @@ import type { StatisticsTimeline } from "@/lib/statistics-types";
 import { IncomeDepositsChart } from "./income-deposits-chart";
 import { UsersTimelineChart } from "./users-timeline-chart";
 
+/** Props of the statistics charts block */
 type Props = {
   timeline: StatisticsTimeline | null;
   loading?: boolean;
 };
 
+/** Block with the timeline charts and an empty state */
 export function StatisticsCharts({ timeline, loading }: Props) {
   if (loading) {
     return (
@@ -19,7 +21,7 @@ export function StatisticsCharts({ timeline, loading }: Props) {
 
   if (!timeline || timeline.points.length === 0) {
     return (
-      <p className="text-sm text-dark-6">Нет данных за выбранный период</p>
+      <p className="text-sm text-dark-6">No data for the selected period</p>
     );
   }
 

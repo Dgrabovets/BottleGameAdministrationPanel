@@ -4,11 +4,13 @@ import { useSession } from "@/hooks/use-session";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
+/** Props of the private route */
 type Props = {
   children: React.ReactNode;
   requiredRole?: string;
 };
 
+/** Renders the children only for the required role (Admin by default), otherwise redirects to the login page or home */
 export default function PrivateRoute({
   children,
   requiredRole = "Admin",

@@ -4,9 +4,9 @@ import { Calendar } from "@/components/Layouts/sidebar/icons";
 import { formatDateParam, getPresetPeriod } from "@/lib/date-range";
 import type { DateRange } from "@/lib/statistics-types";
 import flatpickr from "flatpickr";
-import { Russian } from "flatpickr/dist/l10n/ru.js";
 import { useEffect, useRef } from "react";
 
+/** Props of the date range filter */
 type Props = {
   value: DateRange;
   onChange: (range: DateRange) => void;
@@ -14,21 +14,20 @@ type Props = {
   onPreset?: (range: DateRange) => void;
 };
 
+/** Tailwind classes that set the height of the date input */
 const INPUT_HEIGHT_CLASS =
   "h-11 select-none rounded-lg border border-stroke bg-transparent px-4 text-sm text-dark outline-none transition focus:border-primary dark:border-dark-3 dark:bg-dark-2 dark:text-white";
 
+/** CSS class of the calendar popup, used to restyle flatpickr */
 const CALENDAR_CLASS = "statistics-date-range-calendar";
 
+/** Builds a stable string key from a date range, to detect changes */
 function rangeKey(range: DateRange): string {
   return `${formatDateParam(range.from)}_${formatDateParam(range.till)}`;
 }
 
-export function DateRangeFilter({
-  value,
-  onChange,
-  onApply,
-  onPreset,
-}: Props) {
+/** Date range input with quick presets and an Apply button */
+export function DateRangeFilter({ value, onChange, onApply, onPreset }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const anchorRef = useRef<HTMLDivElement>(null);
   const pickerRef = useRef<flatpickr.Instance | null>(null);
@@ -70,7 +69,6 @@ export function DateRangeFilter({
 
     pickerRef.current = flatpickr(inputRef.current, {
       mode: "range",
-      locale: Russian,
       showMonths: 2,
       static: false,
       appendTo: document.body,
@@ -136,14 +134,14 @@ export function DateRangeFilter({
       <div className="flex flex-col gap-4 lg:flex-row lg:items-end">
         <div className="min-w-[260px] flex-1">
           <label className="mb-2 block text-sm font-medium text-dark-6">
-            Период
+            Period
           </label>
           <div ref={anchorRef} className="relative">
             <input
               ref={inputRef}
               type="text"
               readOnly
-              placeholder="Выберите даты"
+              placeholder="Select dates"
               defaultValue={`${formatDateParam(value.from)} — ${formatDateParam(value.till)}`}
               className={`w-full cursor-pointer pr-11 ${INPUT_HEIGHT_CLASS}`}
             />
@@ -158,18 +156,18 @@ export function DateRangeFilter({
           onClick={onApply}
           className="inline-flex h-11 shrink-0 select-none items-center justify-center rounded-lg bg-primary px-6 text-sm font-semibold text-white transition hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         >
-          Применить
+          Apply
         </button>
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <span className="text-sm text-dark-6">Быстрый выбор:</span>
+        <span className="text-sm text-dark-6">Quick select:</span>
         <button
           type="button"
           onClick={() => applyPreset(30)}
           className="rounded-full border border-stroke px-3.5 py-1.5 text-sm font-medium text-dark transition hover:border-primary hover:text-primary dark:border-dark-3 dark:text-white"
         >
-          30 дней
+          30 days
         </button>
         <button
           type="button"
@@ -185,7 +183,7 @@ export function DateRangeFilter({
           }}
           className="rounded-full border border-stroke px-3.5 py-1.5 text-sm font-medium text-dark transition hover:border-primary hover:text-primary dark:border-dark-3 dark:text-white"
         >
-          12 месяцев
+          12 months
         </button>
       </div>
     </div>

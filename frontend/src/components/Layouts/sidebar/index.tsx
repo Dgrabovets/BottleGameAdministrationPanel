@@ -8,6 +8,7 @@ import { ArrowLeftIcon } from "./icons";
 import { MenuItem } from "./menu-item";
 import { useSidebarContext } from "./sidebar-context";
 
+/** Sidebar with the navigation, hides the admin-only items from moderators */
 export function Sidebar() {
   const pathname = usePathname();
   const { setIsOpen, isOpen, isMobile, toggleSidebar } = useSidebarContext();
@@ -16,15 +17,9 @@ export function Sidebar() {
 
   const filteredNav = NAV_DATA.map((section) => ({
     ...section,
-    items: section.items.filter((item) => {
-      if (
-        (item.title === "Настройки игры" || item.title === "Модераторы") &&
-        userRole !== "Admin"
-      ) {
-        return false;
-      }
-      return true;
-    }),
+    items: section.items.filter(
+      (item) => !item.adminOnly || userRole === "Admin",
+    ),
   }));
 
   return (
@@ -55,7 +50,7 @@ export function Sidebar() {
               className="px-0 py-2.5 min-[850px]:py-0"
             >
               <h1 className="text-heading-6 font-bold text-dark dark:text-white">
-                Панель администратора
+                Admin panel
               </h1>
             </Link>
 
@@ -64,7 +59,7 @@ export function Sidebar() {
                 onClick={toggleSidebar}
                 className="absolute left-3/4 right-4.5 top-1/2 -translate-y-1/2 text-right"
               >
-                <span className="sr-only">Закрыть меню</span>
+                <span className="sr-only">Close menu</span>
 
                 <ArrowLeftIcon className="ml-auto size-7" />
               </button>

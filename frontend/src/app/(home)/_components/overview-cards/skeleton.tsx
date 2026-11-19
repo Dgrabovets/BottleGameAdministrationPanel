@@ -1,18 +1,18 @@
 import { Skeleton } from "@/components/ui/skeleton";
 
+/** Props of the overview cards skeleton */
 type Props = {
   count?: number;
   columnsClassName?: string;
 };
 
+/** Placeholder shown while the overview cards load */
 export function OverviewCardsSkeleton({
   count = 4,
   columnsClassName = "sm:grid-cols-2 xl:grid-cols-4",
 }: Props) {
   return (
-    <div
-      className={`grid gap-4 sm:gap-6 2xl:gap-7.5 ${columnsClassName}`}
-    >
+    <div className={`grid gap-4 sm:gap-6 2xl:gap-7.5 ${columnsClassName}`}>
       {Array.from({ length: count }).map((_, i) => (
         <div
           key={i}
