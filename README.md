@@ -10,11 +10,9 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?logo=tailwindcss&logoColor=white)
 
-<a href="docs/demo/admin-panel-demo-share.mp4">
-  <img src="docs/demo/admin-panel-demo.webp" alt="Walkthrough of the admin panel" width="760">
-</a>
+[![Dashboard of the admin panel](docs/screenshots/dashboard.jpg)](docs/demo/admin-panel-demo-share.mp4)
 
-[Watch the 53-second walkthrough](docs/demo/admin-panel-demo-share.mp4)
+[Download the 36-second walkthrough](docs/demo/admin-panel-demo-share.mp4)
 
 </div>
 

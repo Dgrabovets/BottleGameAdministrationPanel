@@ -8,10 +8,16 @@ import {
   spring,
   staticFile,
   useCurrentFrame,
-  useVideoConfig,
 } from "remotion";
 
+/** The timeline is written in frames of a 30 fps video, the video itself is rendered at SCALE times that rate */
 const FPS = 30;
+export const SCALE = 2;
+export const RENDER_FPS = FPS * SCALE;
+
+/** Current frame in 30 fps units, fractional between them, so every animation moves on each rendered frame */
+const useFrame = () => useCurrentFrame() / SCALE;
+
 const OV = 14; // frames of overlap between scenes
 const WIN_W = 1440;
 const WIN_H = 810;
@@ -76,7 +82,7 @@ const SCENES: SceneDef[] = [
     id: "login",
     image: "login.png",
     imgH: 900,
-    seconds: 4,
+    seconds: 3,
     title: "Sign in",
     caption: "Cookie session, the JWT never reaches the browser",
     cam: [
@@ -90,7 +96,7 @@ const SCENES: SceneDef[] = [
     id: "dashboard",
     image: "tall-dashboard.png",
     imgH: 1500,
-    seconds: 9,
+    seconds: 6,
     title: "Dashboard",
     caption: "Income, deposits, players and pending withdrawals for any period",
     cam: [
@@ -110,7 +116,7 @@ const SCENES: SceneDef[] = [
     id: "players",
     image: "tall-players.png",
     imgH: 1100,
-    seconds: 6,
+    seconds: 4.5,
     title: "Players",
     caption: "Search by Telegram id or name, ban and unban",
     cam: [
@@ -128,7 +134,7 @@ const SCENES: SceneDef[] = [
     id: "player",
     image: "tall-player.png",
     imgH: 1900,
-    seconds: 8,
+    seconds: 5,
     title: "Player profile",
     caption: "Balance, moderation, round history and transactions",
     cam: [
@@ -137,7 +143,7 @@ const SCENES: SceneDef[] = [
       { f: 0.55, cx: 780, cy: 800, z: 1.05 },
       { f: 1, cx: 780, cy: 1300, z: 1.05 },
     ],
-    bands: { y0: 864, rowH: 61, count: 12, delay: 96, stagger: 4 },
+    bands: { y0: 864, rowH: 61, count: 12, delay: 50, stagger: 3 },
     callouts: [
       { x: 1198, y: 405, dx: -520, dy: 150, text: "Direct balance edit: debug only, read-only in production", from: 0.15, to: 0.45 },
     ],
@@ -146,7 +152,7 @@ const SCENES: SceneDef[] = [
     id: "withdrawals",
     image: "withdrawals.png",
     imgH: 900,
-    seconds: 6,
+    seconds: 4.5,
     title: "Withdrawals",
     caption: "Approve or reject: the status can change only once",
     cam: [
@@ -161,7 +167,7 @@ const SCENES: SceneDef[] = [
     id: "deposits",
     image: "deposits.png",
     imgH: 900,
-    seconds: 4,
+    seconds: 2.5,
     title: "Deposits",
     caption: "Every top-up with its status",
     cam: [
@@ -174,7 +180,7 @@ const SCENES: SceneDef[] = [
     id: "settings",
     image: "tall-settings.png",
     imgH: 1780,
-    seconds: 7,
+    seconds: 4,
     title: "Game settings",
     caption: "Win chances, multipliers and the application balance threshold",
     cam: [
@@ -190,16 +196,16 @@ const SCENES: SceneDef[] = [
   },
 ];
 
-const INTRO = 4 * FPS;
-const OUTRO = 5 * FPS;
-const SCENE_FRAMES = SCENES.map((s) => s.seconds * FPS);
-export const TOTAL_FRAMES = INTRO + SCENE_FRAMES.reduce((a, b) => a + b, 0) + OUTRO;
+const INTRO = 3.5 * FPS;
+const OUTRO = 3 * FPS;
+const SCENE_FRAMES = SCENES.map((s) => Math.round(s.seconds * FPS));
+export const TOTAL_FRAMES = (INTRO + SCENE_FRAMES.reduce((a, b) => a + b, 0) + OUTRO) * SCALE;
 
 // ---------------------------------------------------------------- background
 
 /** Dark gradient with slowly drifting light blobs and a faint grid */
 const Backdrop = () => {
-  const frame = useCurrentFrame();
+  const frame = useFrame();
   const blob = (color: string, x: number, y: number, size: number, sx: number, sy: number, ph: number) => (
     <div
       style={{
@@ -210,7 +216,6 @@ const Backdrop = () => {
         height: size,
         borderRadius: size,
         background: `radial-gradient(circle, ${color} 0%, rgba(0,0,0,0) 68%)`,
-        filter: "blur(30px)",
       }}
     />
   );
@@ -404,7 +409,7 @@ const ApproveFlash = ({ frame, at }: { frame: number; at: number }) => {
 
 /** Label with a leader line and a pulsing target point, placed in window coordinates */
 const CalloutView = ({ c, cam, frame, len }: { c: Callout; cam: Cam; frame: number; len: number }) => {
-  const { fps } = useVideoConfig();
+  const fps = FPS;
   const start = c.from * len;
   const end = c.to * len;
   const appear = Math.min(spring({ frame: frame - start, fps, config: { damping: 18, stiffness: 140 } }), 1);
@@ -449,14 +454,16 @@ const CalloutView = ({ c, cam, frame, len }: { c: Callout; cam: Cam; frame: numb
 
 /** One page of the app in a floating browser window with a moving camera */
 const SceneView = ({ scene, len }: { scene: SceneDef; len: number }) => {
-  const raw = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const raw = useFrame();
+  const fps = FPS;
   const frame = Math.max(raw - OV, 0); // local frame, the first OV frames are the slide-in
   const total = len + OV * 2;
   const tin = ease(interpolate(raw, [0, OV * 1.6], [0, 1], { extrapolateRight: "clamp" }));
   const tout = ease(interpolate(raw, [total - OV * 1.6, total], [0, 1], { extrapolateLeft: "clamp" }));
   const cam = camAt(scene.cam, Math.min(frame / len, 1), scene.imgH);
-  const textIn = spring({ frame: raw - 6, fps, config: { damping: 200 } });
+  // The caption appears once the window has slid in and leaves quickly, so two captions are never on screen together
+  const textIn = spring({ frame: raw - OV, fps, config: { damping: 200 } });
+  const textOut = interpolate(tout, [0, 0.35], [1, 0], { extrapolateRight: "clamp" });
   const sx = (1 - tin) * 320 - tout * 320;
   const ry = (1 - tin) * -16 + tout * 16 + Math.sin(raw / 38) * 2.2;
   const rx = 3 + Math.cos(raw / 47) * 1.4;
@@ -531,7 +538,7 @@ const SceneView = ({ scene, len }: { scene: SceneDef; len: number }) => {
           bottom: 42,
           textAlign: "center",
           color: "white",
-          opacity: textIn,
+          opacity: textIn * textOut,
           transform: `translateY(${(1 - textIn) * 28}px)`,
         }}
       >
@@ -546,8 +553,8 @@ const SceneView = ({ scene, len }: { scene: SceneDef; len: number }) => {
 
 /** Title card: the words fly in one by one */
 const Intro = () => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const frame = useFrame();
+  const fps = FPS;
   const words = ["Bottle", "Game", "Admin", "Panel"];
   const line = interpolate(frame, [30, 70], [0, 1], { extrapolateRight: "clamp", easing: ease });
   const sub = interpolate(frame, [50, 80], [0, 1], { extrapolateRight: "clamp" });
@@ -585,8 +592,8 @@ const Intro = () => {
 
 /** Closing card with the repository links */
 const Outro = () => {
-  const frame = useCurrentFrame();
-  const { fps } = useVideoConfig();
+  const frame = useFrame();
+  const fps = FPS;
   const a = spring({ frame, fps, config: { damping: 200 } });
   const b = interpolate(frame, [25, 50], [0, 1], { extrapolateRight: "clamp" });
   const glow = 0.5 + Math.sin(frame / 12) * 0.25;
@@ -617,7 +624,7 @@ export const AdminDemo = () => {
   SCENES.forEach((scene, i) => {
     const len = SCENE_FRAMES[i];
     parts.push(
-      <Sequence key={scene.id} from={start - OV} durationInFrames={len + OV * 2}>
+      <Sequence key={scene.id} from={(start - OV) * SCALE} durationInFrames={(len + OV * 2) * SCALE}>
         <SceneView scene={scene} len={len} />
       </Sequence>,
     );
@@ -631,11 +638,11 @@ export const AdminDemo = () => {
     <AbsoluteFill>
       <style>{fonts}</style>
       <Backdrop />
-      <Sequence from={0} durationInFrames={INTRO}>
+      <Sequence from={0} durationInFrames={INTRO * SCALE}>
         <Intro />
       </Sequence>
       {parts}
-      <Sequence from={start - OV} durationInFrames={OUTRO + OV}>
+      <Sequence from={(start - OV) * SCALE} durationInFrames={(OUTRO + OV) * SCALE}>
         <Outro />
       </Sequence>
     </AbsoluteFill>
