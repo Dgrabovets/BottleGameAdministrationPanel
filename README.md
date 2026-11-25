@@ -5,6 +5,8 @@
 **Back office for a Telegram mini-app game: watch the economy, review withdrawals, moderate players.**
 
 [![CI](https://github.com/Dgrabovets/BottleGameAdministrationPanel/actions/workflows/ci.yml/badge.svg)](https://github.com/Dgrabovets/BottleGameAdministrationPanel/actions/workflows/ci.yml)
+[![Dependency audit](https://github.com/Dgrabovets/BottleGameAdministrationPanel/actions/workflows/security.yml/badge.svg)](https://github.com/Dgrabovets/BottleGameAdministrationPanel/actions/workflows/security.yml)
+[![CodeQL](https://github.com/Dgrabovets/BottleGameAdministrationPanel/actions/workflows/codeql.yml/badge.svg)](https://github.com/Dgrabovets/BottleGameAdministrationPanel/actions/workflows/codeql.yml)
 ![Next.js](https://img.shields.io/badge/Next.js-15-000000?logo=nextdotjs&logoColor=white)
 ![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
@@ -106,7 +108,12 @@ Requirements: Node.js 20 or newer and Docker for the API.
 | `npm run lint` | ESLint |
 | `npm run typecheck` | TypeScript without emitting files |
 
-Every push and pull request runs install, lint, type check and build in GitHub Actions.
+## CI and security checks
+
+- `ci.yml`: install, lint, type check and build on every push to `main` and every pull request.
+- `security.yml` (Dependency audit): `npm audit` for high and critical vulnerabilities on every pull request, every push to `main` and every Monday, plus a review of the dependencies a pull request adds.
+- `codeql.yml`: GitHub CodeQL static analysis of the TypeScript code on the same schedule.
+- Dependabot opens one pull request a week per group of packages. Major versions are left for manual upgrades, because a jump in Next.js, React or Tailwind needs a migration.
 
 ## Project layout
 
@@ -128,7 +135,7 @@ docs/
 
 ## Demo video
 
-The walkthrough is rendered with [Remotion](https://www.remotion.dev/) from screenshots of the running panel. `docs/demo/source` holds the composition and the script that captures the screenshots through Chrome DevTools Protocol, so the video can be rebuilt after any UI change.
+The 36-second walkthrough at the top is hosted as a GitHub attachment, so the repository stays small. It is rendered at 60 frames per second with [Remotion](https://www.remotion.dev/) from screenshots of the running panel. `docs/demo/source` holds the composition and the script that captures the screenshots through Chrome DevTools Protocol, so the video can be rebuilt after any UI change.
 
 ## Credits
 
