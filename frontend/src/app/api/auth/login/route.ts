@@ -47,15 +47,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Invalid data" }, { status: 400 });
     }
 
-    const backendResponse = await fetch(
-      `${getBackendApiUrl()}/auth/admin-login`,
-      {
+    const loginUrl = `${getBackendApiUrl()}/auth/admin-login`;
+    let backendResponse: Response;
+    try {
+      backendResponse = await fetch(loginUrl, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ login, password }),
         redirect: "error",
-      },
-    );
+        // A hung API must not keep the server request open for ever
+        signal: AbortSignal.timeout(15_000),
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      return NextResponse.json(
+        { error: "Backend unavailable" },
+        { status: 502 },
+      );
+    }
+
+    if (backendResponse.status === 429) {
+      return NextResponse.json(
+        { error: "Too many attempts. Try again later" },
+        { status: 429 },
+      );
+    }
 
     const data = await backendResponse.json().catch(() => ({}));
 

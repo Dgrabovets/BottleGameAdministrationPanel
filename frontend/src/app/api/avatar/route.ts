@@ -1,7 +1,7 @@
 import {
-  isAvatarResponseWithinSize,
   isPrivateOrReservedHost,
   isSafeImageContentType,
+  readAvatarBody,
 } from "@/lib/api-security";
 import { isAllowedAvatarHost, normalizeAvatarUrl } from "@/lib/player-avatar";
 import { AUTH_COOKIE_NAME } from "@/lib/session";
@@ -10,12 +10,15 @@ import { NextRequest, NextResponse } from "next/server";
 
 /** Maximum number of redirects followed when fetching an avatar */
 const MAX_REDIRECTS = 3;
+/** Time allowed for all hops and the download of an avatar, in milliseconds */
+const AVATAR_TIMEOUT_MS = 10_000;
 
 /** Fetches an avatar and follows redirects manually, checking every hop against the host rules */
 async function fetchAvatarWithRedirects(
   startUrl: string,
 ): Promise<Response | null> {
   let currentUrl = startUrl;
+  const signal = AbortSignal.timeout(AVATAR_TIMEOUT_MS);
 
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
     const parsed = new URL(currentUrl);
@@ -32,10 +35,13 @@ async function fetchAvatarWithRedirects(
         "User-Agent": "Mozilla/5.0 (compatible; BottleAdmin/1.0)",
       },
       redirect: "manual",
-      next: { revalidate: 3600 },
+      // The Next data cache would read the whole body before the size cap applies
+      cache: "no-store",
+      signal,
     });
 
     if (response.status >= 300 && response.status < 400) {
+      await response.body?.cancel();
       const location = response.headers.get("location");
       if (!location) return null;
       currentUrl = new URL(location, currentUrl).toString();
@@ -89,10 +95,8 @@ export async function GET(request: NextRequest) {
       return new NextResponse(null, { status: 415 });
     }
 
-    const body = await upstream.arrayBuffer();
-    if (
-      !isAvatarResponseWithinSize(upstream.headers.get("Content-Length"), body)
-    ) {
+    const body = await readAvatarBody(upstream);
+    if (!body) {
       return new NextResponse(null, { status: 413 });
     }
 

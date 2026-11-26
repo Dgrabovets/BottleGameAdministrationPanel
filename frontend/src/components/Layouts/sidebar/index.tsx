@@ -20,7 +20,7 @@ export function Sidebar() {
     items: section.items.filter(
       (item) => !item.adminOnly || userRole === "Admin",
     ),
-  }));
+  })).filter((section) => section.items.length > 0);
 
   return (
     <>

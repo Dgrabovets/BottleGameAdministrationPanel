@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/table";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { getPlayerAvatarUrl } from "@/lib/player-avatar";
+import { formatWinRate } from "@/lib/format-number";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { playersApi } from "@/api/playersApi";
@@ -88,7 +89,7 @@ export function TopPlayers() {
 
               <TableCell>{player.balance} ₽</TableCell>
 
-              <TableCell>{player.player.winRate}</TableCell>
+              <TableCell>{formatWinRate(player.player.winRate)}</TableCell>
 
               <TableCell>
                 {new Date(player.player.registeredInAppAt)

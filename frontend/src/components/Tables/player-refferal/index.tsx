@@ -12,6 +12,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { getPlayerAvatarUrl } from "@/lib/player-avatar";
+import { formatWinRate } from "@/lib/format-number";
 
 /** Props of the referrals table */
 interface PlayerReferralProps {
@@ -79,7 +80,7 @@ export function PlayerRefferalTable({ data }: PlayerReferralProps) {
                 </p>
               </TableCell>
 
-              <TableCell>{item.winRate}%</TableCell>
+              <TableCell>{formatWinRate(item.winRate)}</TableCell>
             </TableRow>
           ))}
         </TableBody>
