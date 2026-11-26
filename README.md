@@ -1,3 +1,5 @@
+<img src="docs/header.svg" alt="Bottle Game Administration Panel" width="100%">
+
 <div align="center">
 
 # Bottle Game Admin Panel
@@ -20,11 +22,11 @@ The dashboard for [Bottle Game API](https://github.com/Dgrabovets/BottleGameAPI)
 
 ## Highlights
 
-- **Dashboard with live numbers.** Balance, deposits, income, active players and pending withdrawals, plus growth charts for any date range. It refreshes every 5 seconds.
+- **Dashboard with live numbers.** Total player balance, income, deposits, number of players and withdrawals in progress, plus charts for any date range. It refreshes every 5 seconds.
 - **Withdrawals under control.** Approve or reject a request. A status can change only once, the API enforces it.
 - **Player moderation.** Search by Telegram id or name, ban and unban with a reason, and open a profile with rounds, transactions and referrals. Players, deposits and withdrawals load page by page.
 - **Game tuning.** Edit win chances, multipliers and boosts, and set the lower threshold of the application balance.
-- **Roles.** Admin and Moderator accounts exist. The panel hides the game settings and staff pages from moderators, and the API decides what each role may do (see [Known limitations](#known-limitations)).
+- **Roles.** Admins see everything. Moderators work with withdrawals, deposits and players: they approve or reject withdrawals and ban or unban players. They cannot edit player profiles, and they do not see the dashboard statistics, the game settings or the staff list. The API enforces the same rules.
 - **Safe by design.** The API token never reaches the browser, every request goes through a server-side proxy with an allow-list. See [How it talks to the API](#how-it-talks-to-the-api).
 - **Dark and light themes**, responsive layout.
 
@@ -44,8 +46,8 @@ Demo data from a local Bottle Game API.
 
 | Route | What it does |
 |---|---|
-| `/` | Dashboard: balance, deposits and withdrawals, active players, income and player growth charts with a date range |
-| `/players`, `/player/[id]` | Player search, profile editing, bans, referrals, played rounds and transactions |
+| `/` | Dashboard: player balance, income, deposits, players and withdrawals in progress, with charts for a date range (admin only, a moderator is sent to `/withdraws`) |
+| `/players`, `/player/[id]` | Player search, bans, referrals, played rounds, transactions and profile editing (editing is admin only) |
 | `/withdraws` | Withdrawal requests: approve or reject |
 | `/deposits` | Deposit history |
 | `/top-players` | Top 100 players by balance |
@@ -54,20 +56,17 @@ Demo data from a local Bottle Game API.
 
 ## How it talks to the API
 
-```mermaid
-flowchart LR
-    B["Browser<br/>React 19 UI"] -- "httpOnly cookie" --> N["Next.js server<br/>middleware + route handlers"]
-    N -- "Authorization: Bearer JWT" --> A["Bottle Game API<br/>ASP.NET Core"]
-    A --> D[("PostgreSQL")]
-```
+<img src="docs/diagrams/admin-request-path.png" alt="Admin request path. Sign in: the browser posts the login and password to /api/auth/login, the Next.js server forwards them to the API and stores the returned JWT in an httpOnly cookie. Data: each request goes with that cookie through the middleware and the /api/backend proxy, which adds the Bearer token and calls the API; the API checks the token and the role and reads PostgreSQL" width="100%">
+
+The source of the diagram is `docs/diagrams/admin-request-path.svg`; `node docs/diagrams/render.mjs <fonts folder>` renders the PNG. The script runs on Windows with Microsoft Edge in its default folder, and the fonts folder must contain `JetBrainsMono[wght].ttf` and `IBMPlexSans[wdth,wght].ttf` (the variable files of [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono) and [IBM Plex Sans](https://fonts.google.com/specimen/IBM+Plex+Sans)).
 
 The browser never receives the API token and never calls the API directly.
 
-- `POST /api/auth/login` forwards the credentials to the API and stores the returned JWT in an `httpOnly`, `sameSite=lax` cookie. Login attempts are rate limited and requests must come from the same origin.
-- All data requests go through `/api/backend/[...path]`, a server-side proxy that adds the `Authorization` header, accepts only known API paths and refuses redirects. In production it also refuses loopback and private hosts.
-- `src/middleware.ts` redirects visitors without a valid session to `/login`, drops expired cookies and keeps the admin-only pages (`/settings`, `/moderators`) away from moderators. The middleware only checks expiry; the API validates the token signature on every request.
+- `POST /api/auth/login` forwards the credentials to the API, gives up after 15 seconds and stores the returned JWT in an `httpOnly`, `sameSite=lax` cookie. The cookie is set for 7 days, but the API token expires after 6 hours by default (`JWT:ExpireMinutes`); the panel then drops the cookie and asks to sign in again. Login attempts are rate limited, and a request whose `Origin` (or, without it, `Referer`) header names another host is rejected. A request with neither header is accepted.
+- All data requests go through `/api/backend/[...path]`, a server-side proxy that adds the `Authorization` header, accepts only known API paths, applies the same origin check to requests that change data, refuses redirects and gives up after 15 seconds. In production it also refuses an API URL whose host is written as `localhost`, a `.local` name or a loopback or private IP address. It does not resolve DNS names, and the login route does not make this check.
+- `src/middleware.ts` redirects visitors without a valid session to `/login`, drops expired cookies and keeps the admin-only pages (`/`, `/settings`, `/moderators`) away from moderators. The middleware only checks expiry; the API validates the token signature on every request.
 - `next.config.mjs` sets security headers: a Content-Security-Policy, `X-Frame-Options: DENY`, `X-Content-Type-Options` and a strict `Referrer-Policy`.
-- Player avatars are fetched through `/api/avatar`, which allows only image types from known hosts, limits the size and follows a few redirects at most.
+- Player avatars are fetched through `/api/avatar`, which allows only JPEG, PNG, GIF and WebP images (no SVG) from known hosts, stops a download over 2 MB or longer than 10 seconds and follows three redirects at most.
 
 ## Getting started
 
@@ -94,8 +93,8 @@ Requirements: Node.js 20 or newer and Docker for the API.
 
 | Variable | Purpose |
 |---|---|
-| `INTERNAL_API_URL` | API base URL used by the server for login and the proxy (includes `/api`). Required in production, where the proxy refuses loopback and private hosts; in development it defaults to `http://localhost:8080/api` |
-| `NEXT_PUBLIC_API_URL` | Public API URL, informational |
+| `INTERNAL_API_URL` | API base URL used by the server for login and the proxy (includes `/api`). In production this or `NEXT_PUBLIC_API_URL` must be set, and the proxy refuses `localhost`, `.local` names and loopback or private IP addresses; in development it defaults to `http://localhost:8080/api` |
+| `NEXT_PUBLIC_API_URL` | Used only when `INTERNAL_API_URL` is empty |
 | `DEV_API_REWRITE_TARGET` | Optional development rewrite target for a local API with a self-signed certificate |
 
 ### Scripts
@@ -113,7 +112,13 @@ Requirements: Node.js 20 or newer and Docker for the API.
 - `ci.yml`: install, lint, type check and build on every push to `main` and every pull request.
 - `security.yml` (Dependency audit): `npm audit` for high and critical vulnerabilities on every pull request, every push to `main` and every Monday, plus a review of the dependencies a pull request adds.
 - `codeql.yml`: GitHub CodeQL static analysis of the TypeScript code on the same schedule.
-- Dependabot opens one pull request a week per group of packages. Major versions are left for manual upgrades, because a jump in Next.js, React or Tailwind needs a migration.
+- Dependabot checks the npm packages and the GitHub Actions every week. The React and Next.js group and the tooling group each get one pull request; every other npm package and every action gets its own. Major npm versions are left for manual upgrades, because a jump in Next.js, React or Tailwind needs a migration.
+
+## Known limitations
+
+- The login rate limit of the panel (25 attempts a minute per client, kept in memory) takes the client address from the first value of `X-Forwarded-For`, or from `X-Real-IP`. A client can forge these headers and get past the limit unless a reverse proxy in front of the panel overwrites them.
+- The panel does not forward the client address to the API, so the API's own sign-in limit counts all panel users as one client. One client that keeps trying can keep sign-in blocked for everyone.
+- The referrals table of a player profile shows a win rate of 0%, because the API does not load the rounds of invited players.
 
 ## Project layout
 
@@ -125,18 +130,34 @@ frontend/src
   lib/            session and security helpers, formatting, date ranges
   hooks/          session and responsive helpers
 docs/
-  screenshots/    images used in this README
-  demo/           walkthrough video and the Remotion project that renders it
+  screenshots/    images used in this README and in the demo video
+  diagrams/       source and image of the request path diagram
+  demo/           the Remotion project that renders the demo video
 ```
-
-## Known limitations
-
-- **Moderators have almost no access today.** The API lets a moderator only approve or reject withdrawals; statistics, player and transaction lists and bans answer 403. The panel is meant to be used with an admin account until the API grants moderators more.
 
 ## Demo video
 
-The 36-second walkthrough at the top is hosted as a GitHub attachment, so the repository stays small. It is rendered at 60 frames per second with [Remotion](https://www.remotion.dev/) from screenshots of the running panel. `docs/demo/source` holds the composition and the script that captures the screenshots through Chrome DevTools Protocol, so the video can be rebuilt after any UI change.
+The 36-second walkthrough at the top is hosted as a GitHub attachment, so the repository stays small. It is rendered at 60 frames per second with [Remotion](https://www.remotion.dev/) from screenshots of the running panel. `docs/demo/source` holds the composition and the script that captures new screenshots through Chrome DevTools Protocol.
 
-## Credits
+To capture new screenshots, start the panel on `http://localhost:3000` against the demo API and run the script (Windows, Google Chrome in its default folder, Node.js 22 or newer):
 
-The layout started from the free [NextAdmin](https://nextadmin.co/) template. The unused template pages, components and images have been removed and the rest rewritten for this project.
+```bash
+node docs/demo/source/capture-screenshots.mjs <spare folder> <frames folder> <temporary Chrome profile folder>
+```
+
+It writes PNG files to the frames folder. The first folder is created but stays empty, and the profile folder is **deleted** at the start. The script does not update `docs/screenshots`: to refresh it, convert the `dashboard`, `players`, `player`, `withdrawals`, `deposits` and `settings` frames to JPEG and copy them there.
+
+To render the composition, create `docs/demo/source/public` with the images from `docs/screenshots`, `Satoshi-Medium.woff2` and `Satoshi-Bold.woff2` from `frontend/src/fonts`, and [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono) and [IBM Plex Sans](https://fonts.google.com/specimen/IBM+Plex+Sans) saved as `JetBrainsMono.ttf` and `IBMPlexSans.ttf` (the variable files). Then run:
+
+```bash
+cd docs/demo/source
+npm install
+npx remotion render src/index.ts AdminDemo ../admin-panel-demo.mp4
+```
+
+## License
+
+The code is under the [MIT License](LICENSE). Two parts come from others and are not covered by it:
+
+- The layout started from the free [NextAdmin](https://nextadmin.co/) template by [NextAdminHQ](https://github.com/NextAdminHQ/nextjs-admin-dashboard). Unused template pages, components and images have been removed, and the parts the panel still uses, such as the layout, the theme and the shared components, have been adapted for this project. The authors describe the template as free and open source, but its repository has no licence file, so whatever remains of it stays under their terms.
+- The Satoshi font in `frontend/src/fonts` is copyright Indian Type Foundry and comes under the [Fontshare terms](https://fontshare.com/terms).
