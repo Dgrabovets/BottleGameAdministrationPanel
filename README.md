@@ -137,7 +137,7 @@ docs/
 
 ## Demo video
 
-The 36-second walkthrough at the top is hosted as a GitHub attachment, so the repository stays small. It is rendered at 60 frames per second with [Remotion](https://www.remotion.dev/) from screenshots of the running panel. `docs/demo/source` holds the composition and the script that captures new screenshots through Chrome DevTools Protocol.
+The 36-second walkthrough at the top is hosted as a GitHub attachment, so the repository stays small. It was rendered at 60 frames per second with [Remotion](https://www.remotion.dev/) from screenshots of the running panel and recolored afterwards. `docs/demo/source` holds a newer composition, which renders a different video, and the script that captures new screenshots through Chrome DevTools Protocol.
 
 To capture new screenshots, start the panel on `http://localhost:3000` against the demo API and run the script (Windows, Google Chrome in its default folder, Node.js 22 or newer):
 
