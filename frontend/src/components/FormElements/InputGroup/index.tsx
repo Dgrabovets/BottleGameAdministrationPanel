@@ -14,6 +14,8 @@ type InputGroupProps = {
   handleChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
   value?: string | number;
   name?: string;
+  autoComplete?: string;
+  autoCapitalize?: string;
   icon?: React.ReactNode;
   iconPosition?: "left" | "right";
   height?: "sm" | "default";
@@ -57,6 +59,8 @@ const InputGroup: React.FC<InputGroupProps> = ({
           id={id}
           type={type}
           name={props.name}
+          autoComplete={props.autoComplete}
+          autoCapitalize={props.autoCapitalize}
           placeholder={placeholder}
           onChange={handleChange}
           value={props.value}

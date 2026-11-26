@@ -16,6 +16,11 @@ export function standardFormat(value: number) {
   });
 }
 
+/** Formats a win rate, a ratio from 0 to 1, as a percentage */
+export function formatWinRate(ratio: number | undefined) {
+  return `${Math.round((ratio ?? 0) * 100)}%`;
+}
+
 /** Formats an amount in rubles */
 export function formatRub(value: number, compact = false) {
   const formatted = compact ? compactFormat(value) : standardFormat(value);

@@ -9,7 +9,7 @@ import InputGroup from "@/components/FormElements/InputGroup";
 
 /** Login page */
 export default function SignIn() {
-  const [email, setEmail] = useState("");
+  const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -24,7 +24,7 @@ export default function SignIn() {
       const response = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ login: email, password }),
+        body: JSON.stringify({ login, password }),
       });
 
       if (!response.ok) {
@@ -52,18 +52,21 @@ export default function SignIn() {
             <div className="w-full p-4 sm:p-12.5 xl:p-15">
               <form onSubmit={submitAuth}>
                 <InputGroup
-                  type="email"
+                  type="text"
+                  autoComplete="username"
+                  autoCapitalize="none"
                   label="Login"
                   className="mb-4 [&_input]:py-[15px]"
                   placeholder="Enter your login"
-                  name="email"
-                  handleChange={(e) => setEmail(e.target.value)}
-                  value={email}
+                  name="login"
+                  handleChange={(e) => setLogin(e.target.value)}
+                  value={login}
                   icon={<EmailIcon />}
                 />
 
                 <InputGroup
                   type="password"
+                  autoComplete="current-password"
                   label="Password"
                   className="mb-5 [&_input]:py-[15px]"
                   placeholder="Enter your password"

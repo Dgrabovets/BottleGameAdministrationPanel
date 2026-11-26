@@ -87,6 +87,14 @@ export default function middleware(request: NextRequest) {
     }
   }
 
+  // The dashboard statistics are for administrators, so a moderator starts on the withdrawals page
+  if (hasValidToken && pathname === "/") {
+    const session = getAdminSessionFromToken(token!);
+    if (!session || session.role !== "Admin") {
+      return NextResponse.redirect(new URL("/withdraws", request.url));
+    }
+  }
+
   return NextResponse.next();
 }
 

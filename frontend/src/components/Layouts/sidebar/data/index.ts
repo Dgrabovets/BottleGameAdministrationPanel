@@ -26,6 +26,7 @@ export const NAV_DATA: SectionType[] = [
         icon: Icons.HomeIcon,
         url: "/",
         items: [],
+        adminOnly: true,
       },
       {
         title: "Players",

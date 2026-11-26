@@ -256,7 +256,8 @@ export default function SettingsPage() {
             )}
           </ShowcaseSection>
 
-          {!isDisabled && (
+          {/* Administrators and moderators may both ban and unban */}
+          {session && (
             <ShowcaseSection
               title="Moderation"
               className="flex flex-1 flex-col justify-center !p-7"

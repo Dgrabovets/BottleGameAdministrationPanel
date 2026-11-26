@@ -10,6 +10,7 @@ import {
 } from "@/components/ui/table";
 import { PlayerAvatar } from "@/components/PlayerAvatar";
 import { getPlayerAvatarUrl } from "@/lib/player-avatar";
+import { formatWinRate } from "@/lib/format-number";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -257,7 +258,9 @@ export function Players() {
 
                     <TableCell>{player.balance} ₽</TableCell>
 
-                    <TableCell>{player.player.winRate?.toFixed(2)}%</TableCell>
+                    <TableCell>
+                      {formatWinRate(player.player.winRate)}
+                    </TableCell>
 
                     <TableCell>
                       {new Date(player.player.registeredInAppAt)
