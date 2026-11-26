@@ -26,3 +26,5 @@ Desktop.ini
 # Demo video: the full-quality render and generated files stay local
 docs/demo/admin-panel-demo.mp4
 docs/demo/*.gif
+docs/demo/source/public/
+docs/demo/source/node_modules/

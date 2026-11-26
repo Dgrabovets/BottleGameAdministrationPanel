@@ -7,27 +7,22 @@ import {
   interpolate,
   spring,
   staticFile,
-  useCurrentFrame,
 } from "remotion";
-
-/** The timeline is written in frames of a 30 fps video, the video itself is rendered at SCALE times that rate */
-const FPS = 30;
-export const SCALE = 2;
-export const RENDER_FPS = FPS * SCALE;
-
-/** Current frame in 30 fps units, fractional between them, so every animation moves on each rendered frame */
-const useFrame = () => useCurrentFrame() / SCALE;
+import { COLOR, MONO, SANS, useFonts } from "./brand";
+import { Intro } from "./Intro";
+import { Outro } from "./Outro";
+import { FPS, INTRO, OUTRO, SCALE, ease, useFrame } from "./timing";
 
 const OV = 14; // frames of overlap between scenes
 const WIN_W = 1440;
-const WIN_H = 810;
+const WIN_H = 900; // the window shows a whole screenshot, so nothing is cut at zoom 1
+const WIN_SCALE = 0.9; // shrinks the window to leave room for the caption
 const BAR_H = 40;
 const IMG_W = 1440;
 const SIDEBAR_W = 290; // width of the sidebar in the screenshots, it must not slide with the rows
 
 const CARD = "rgb(18,32,49)";
-const FONT = "Satoshi, 'Segoe UI', Arial, sans-serif";
-const ease = Easing.bezier(0.45, 0, 0.2, 1);
+const PANEL_FONT = "Satoshi, 'Segoe UI', Arial, sans-serif"; // text that imitates the panel itself
 
 // ---------------------------------------------------------------- camera
 
@@ -61,6 +56,20 @@ function toWin(cam: Cam, x: number, y: number) {
   return { x: (x - cam.cx) * cam.z + WIN_W / 2, y: (y - cam.cy) * cam.z + WIN_H / 2 };
 }
 
+// The whole screenshot
+const FULL = { cx: 720, cy: 450, z: 1 };
+// The only zoom that hides the whole sidebar and keeps the page uncut from its left to its right edge
+const PAGE = { cx: 873, z: 1.27 };
+
+/** Camera that zooms from the whole screenshot to the page at the height cy and stays there */
+function zoomToPage(reached: number, cy: number): Key[] {
+  return [
+    { f: 0, ...FULL },
+    { f: reached, ...PAGE, cy },
+    { f: 1, ...PAGE, cy },
+  ];
+}
+
 // ---------------------------------------------------------------- scenes
 
 type Band = { y0: number; rowH: number; count: number; delay: number; stagger: number };
@@ -79,52 +88,30 @@ type SceneDef = {
 
 const SCENES: SceneDef[] = [
   {
-    id: "login",
-    image: "login.png",
-    imgH: 900,
-    seconds: 3,
-    title: "Sign in",
-    caption: "Cookie session, the JWT never reaches the browser",
-    cam: [
-      { f: 0, cx: 720, cy: 450, z: 1 },
-      { f: 0.55, cx: 372, cy: 420, z: 1.5 },
-      { f: 1, cx: 372, cy: 470, z: 1.6 },
-    ],
-    callouts: [{ x: 372, y: 532, dx: 330, dy: -120, text: "Server-side proxy and rate limit", from: 0.45, to: 1 }],
-  },
-  {
     id: "dashboard",
-    image: "tall-dashboard.png",
-    imgH: 1500,
-    seconds: 6,
+    image: "dashboard.jpg",
+    imgH: 900,
+    seconds: 5,
     title: "Dashboard",
     caption: "Income, deposits, players and pending withdrawals for any period",
     cam: [
-      { f: 0, cx: 720, cy: 450, z: 1 },
-      { f: 0.2, cx: 840, cy: 300, z: 1.4 },
-      { f: 0.42, cx: 840, cy: 320, z: 1.4 },
-      { f: 0.58, cx: 720, cy: 740, z: 1.15 },
-      { f: 0.76, cx: 720, cy: 1230, z: 1.3 },
-      { f: 1, cx: 720, cy: 1230, z: 1.3 },
+      { f: 0, ...FULL },
+      { f: 0.15, ...PAGE, cy: 354 },
+      { f: 0.5, ...PAGE, cy: 354 },
+      { f: 0.7, ...FULL },
+      { f: 1, ...FULL },
     ],
-    callouts: [
-      { x: 640, y: 888, dx: -60, dy: -150, text: "Live: refreshes every 5 seconds", from: 0.5, to: 0.7 },
-      { x: 1250, y: 1110, dx: -330, dy: -170, text: "Charts built from the timeline API", from: 0.8, to: 1 },
-    ],
+    callouts: [{ x: 650, y: 888, dx: 270, dy: -18, text: "Live: refreshes every 5 seconds", from: 0.65, to: 1 }],
   },
   {
     id: "players",
-    image: "tall-players.png",
-    imgH: 1100,
+    image: "players.jpg",
+    imgH: 900,
     seconds: 4.5,
     title: "Players",
     caption: "Search by Telegram id or name, ban and unban",
-    cam: [
-      { f: 0, cx: 720, cy: 450, z: 1 },
-      { f: 0.5, cx: 1000, cy: 420, z: 1.3 },
-      { f: 1, cx: 1000, cy: 520, z: 1.35 },
-    ],
-    bands: { y0: 313, rowH: 93, count: 8, delay: 8, stagger: 5 },
+    cam: zoomToPage(0.3, 423),
+    bands: { y0: 313, rowH: 93, count: 6, delay: 8, stagger: 5 },
     callouts: [
       { x: 1370, y: 209, dx: -570, dy: 0, text: "Search by Telegram id or name", from: 0.35, to: 0.62 },
       { x: 1357, y: 452, dx: -430, dy: 20, text: "Ban or unban in one click", from: 0.62, to: 1 },
@@ -132,109 +119,51 @@ const SCENES: SceneDef[] = [
   },
   {
     id: "player",
-    image: "tall-player.png",
-    imgH: 1900,
-    seconds: 5,
+    image: "player.jpg",
+    imgH: 900,
+    seconds: 3.5,
     title: "Player profile",
     caption: "Balance, moderation, round history and transactions",
-    cam: [
-      { f: 0, cx: 720, cy: 450, z: 1 },
-      { f: 0.3, cx: 1000, cy: 400, z: 1.3 },
-      { f: 0.55, cx: 780, cy: 800, z: 1.05 },
-      { f: 1, cx: 780, cy: 1300, z: 1.05 },
-    ],
-    bands: { y0: 864, rowH: 61, count: 12, delay: 50, stagger: 3 },
+    cam: zoomToPage(0.35, 449),
     callouts: [
-      { x: 1198, y: 405, dx: -520, dy: 150, text: "Direct balance edit: debug only, read-only in production", from: 0.15, to: 0.45 },
+      { x: 1198, y: 405, dx: -709, dy: 247, text: "Direct balance edit: debug only, read-only in production", from: 0.4, to: 0.9 },
     ],
   },
   {
     id: "withdrawals",
-    image: "withdrawals.png",
+    image: "withdrawals.jpg",
     imgH: 900,
     seconds: 4.5,
     title: "Withdrawals",
     caption: "Approve or reject: the status can change only once",
-    cam: [
-      { f: 0, cx: 720, cy: 450, z: 1 },
-      { f: 0.4, cx: 920, cy: 380, z: 1.4 },
-      { f: 1, cx: 1000, cy: 380, z: 1.5 },
-    ],
+    cam: zoomToPage(0.3, 354),
     bands: { y0: 296, rowH: 93, count: 4, delay: 8, stagger: 7 },
-    callouts: [{ x: 1342, y: 342, dx: -470, dy: 130, text: "Approve or reject a request", from: 0.28, to: 0.52 }],
+    callouts: [{ x: 1342, y: 342, dx: -435, dy: -272, text: "Approve or reject a request", from: 0.28, to: 0.52 }],
   },
   {
     id: "deposits",
-    image: "deposits.png",
+    image: "deposits.jpg",
     imgH: 900,
     seconds: 2.5,
     title: "Deposits",
     caption: "Every top-up with its status",
-    cam: [
-      { f: 0, cx: 720, cy: 450, z: 1 },
-      { f: 1, cx: 860, cy: 520, z: 1.2 },
-    ],
+    cam: zoomToPage(0.5, 445),
     bands: { y0: 242, rowH: 93, count: 7, delay: 6, stagger: 5 },
   },
   {
     id: "settings",
-    image: "tall-settings.png",
-    imgH: 1780,
-    seconds: 4,
+    image: "settings.jpg",
+    imgH: 900,
+    seconds: 3.5,
     title: "Game settings",
-    caption: "Win chances, multipliers and the application balance threshold",
-    cam: [
-      { f: 0, cx: 720, cy: 450, z: 1 },
-      { f: 0.3, cx: 860, cy: 420, z: 1.3 },
-      { f: 0.7, cx: 860, cy: 1000, z: 1.2 },
-      { f: 1, cx: 860, cy: 1500, z: 1.2 },
-    ],
-    callouts: [
-      { x: 1245, y: 367, dx: -520, dy: 120, text: "Edited live and saved through the API", from: 0.12, to: 0.4 },
-      { x: 615, y: 1620, dx: 330, dy: -140, text: "Lower threshold guards payouts", from: 0.8, to: 1 },
-    ],
+    caption: "Win chances, multipliers and boosts",
+    cam: zoomToPage(0.35, 430),
+    callouts: [{ x: 1245, y: 367, dx: -440, dy: -145, text: "Edited live and saved through the API", from: 0.4, to: 0.95 }],
   },
 ];
 
-const INTRO = 3.5 * FPS;
-const OUTRO = 3 * FPS;
 const SCENE_FRAMES = SCENES.map((s) => Math.round(s.seconds * FPS));
 export const TOTAL_FRAMES = (INTRO + SCENE_FRAMES.reduce((a, b) => a + b, 0) + OUTRO) * SCALE;
-
-// ---------------------------------------------------------------- background
-
-/** Dark gradient with slowly drifting light blobs and a faint grid */
-const Backdrop = () => {
-  const frame = useFrame();
-  const blob = (color: string, x: number, y: number, size: number, sx: number, sy: number, ph: number) => (
-    <div
-      style={{
-        position: "absolute",
-        left: x + Math.sin(frame / sx + ph) * 160,
-        top: y + Math.cos(frame / sy + ph) * 110,
-        width: size,
-        height: size,
-        borderRadius: size,
-        background: `radial-gradient(circle, ${color} 0%, rgba(0,0,0,0) 68%)`,
-      }}
-    />
-  );
-  return (
-    <AbsoluteFill style={{ background: "linear-gradient(135deg,#050816,#0d1230 55%,#150d2e)" }}>
-      {blob("rgba(79,70,229,0.55)", 100, 80, 900, 90, 110, 0)}
-      {blob("rgba(14,165,233,0.35)", 1100, 380, 800, 120, 80, 2)}
-      {blob("rgba(168,85,247,0.35)", 600, 700, 700, 100, 130, 4)}
-      <AbsoluteFill
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.035) 1px, transparent 1px)",
-          backgroundSize: "64px 64px",
-          transform: `translateY(${(frame * 0.4) % 64}px)`,
-        }}
-      />
-    </AbsoluteFill>
-  );
-};
 
 // ---------------------------------------------------------------- scene pieces
 
@@ -295,22 +224,13 @@ function formatCount(v: number, kind: string): string {
   return `${Math.round(v)} ₽`;
 }
 
-/** Dashboard numbers that count up from zero, and charts that are drawn from left to right */
-const DashboardLive = ({ frame, len }: { frame: number; len: number }) => {
+/** Dashboard numbers that count up from zero */
+const DashboardLive = ({ frame }: { frame: number }) => {
   const count = interpolate(frame, [18, 80], [0, 1], {
     extrapolateLeft: "clamp",
     extrapolateRight: "clamp",
     easing: Easing.out(Easing.cubic),
   });
-  const reveal = interpolate(frame, [len * 0.62, len * 0.88], [0, 1], {
-    extrapolateLeft: "clamp",
-    extrapolateRight: "clamp",
-    easing: ease,
-  });
-  const charts = [
-    { x: 366, w: 470 },
-    { x: 900, w: 470 },
-  ];
   return (
     <>
       {count < 1 &&
@@ -325,7 +245,7 @@ const DashboardLive = ({ frame, len }: { frame: number; len: number }) => {
               height: 34,
               background: CARD,
               color: "white",
-              fontFamily: FONT,
+              fontFamily: PANEL_FONT,
               fontWeight: 700,
               fontSize: 26,
               lineHeight: "34px",
@@ -334,21 +254,6 @@ const DashboardLive = ({ frame, len }: { frame: number; len: number }) => {
           >
             {formatCount(n.target * count, n.kind)}
           </div>
-        ))}
-      {reveal < 1 &&
-        charts.map((c, i) => (
-          <div
-            key={i}
-            style={{
-              position: "absolute",
-              left: c.x + c.w * reveal,
-              top: 1096,
-              width: c.w * (1 - reveal) + 4,
-              height: 310,
-              background: CARD,
-              boxShadow: reveal > 0 ? "-12px 0 24px rgba(79,70,229,0.5)" : undefined,
-            }}
-          />
         ))}
     </>
   );
@@ -381,7 +286,7 @@ const ApproveFlash = ({ frame, at }: { frame: number; at: number }) => {
             borderRadius: 20,
             background: "rgba(33,150,83,0.16)",
             color: "#2fbf71",
-            fontFamily: FONT,
+            fontFamily: PANEL_FONT,
             fontWeight: 500,
             fontSize: 15,
             transform: `scale(${1 + (1 - t) * 0.3})`,
@@ -423,9 +328,9 @@ const CalloutView = ({ c, cam, frame, len }: { c: Callout; cam: Cam; frame: numb
   return (
     <>
       <svg width={WIN_W} height={WIN_H} style={{ position: "absolute", left: 0, top: 0, opacity }}>
-        <line x1={p.x} y1={p.y} x2={lx} y2={ly} stroke="#818cf8" strokeWidth={2.5} strokeDasharray="6 6" />
-        <circle cx={p.x} cy={p.y} r={7} fill="#818cf8" />
-        <circle cx={p.x} cy={p.y} r={7 + pulse * 26} fill="none" stroke="#818cf8" strokeWidth={2.5} opacity={1 - pulse} />
+        <line x1={p.x} y1={p.y} x2={lx} y2={ly} stroke={COLOR.second} strokeWidth={2.5} strokeDasharray="6 6" />
+        <circle cx={p.x} cy={p.y} r={7} fill={COLOR.accent} />
+        <circle cx={p.x} cy={p.y} r={7 + pulse * 26} fill="none" stroke={COLOR.accent} strokeWidth={2.5} opacity={1 - pulse} />
       </svg>
       <div
         style={{
@@ -436,11 +341,11 @@ const CalloutView = ({ c, cam, frame, len }: { c: Callout; cam: Cam; frame: numb
           opacity,
           padding: "12px 20px",
           borderRadius: 14,
-          background: "rgba(10,14,35,0.94)",
-          border: "1.5px solid #6366f1",
-          boxShadow: "0 0 30px rgba(99,102,241,0.55)",
-          color: "white",
-          fontFamily: FONT,
+          background: COLOR.surface,
+          border: `2px solid ${COLOR.accent}`,
+          boxShadow: "0 10px 30px rgba(0,0,0,0.6)",
+          color: COLOR.text,
+          fontFamily: SANS,
           fontWeight: 500,
           fontSize: 25,
           whiteSpace: "nowrap",
@@ -470,8 +375,8 @@ const SceneView = ({ scene, len }: { scene: SceneDef; len: number }) => {
   const floatY = Math.sin(raw / 30) * 7;
 
   return (
-    <AbsoluteFill style={{ opacity: tin * (1 - tout), fontFamily: FONT }}>
-      <div style={{ position: "absolute", left: 240, top: 50, perspective: 2400 }}>
+    <AbsoluteFill style={{ opacity: tin * (1 - tout), fontFamily: SANS }}>
+      <div style={{ position: "absolute", left: 240, top: 40, perspective: 2400, transform: `scale(${WIN_SCALE})`, transformOrigin: "50% 0" }}>
         <div
           style={{
             width: WIN_W,
@@ -479,12 +384,12 @@ const SceneView = ({ scene, len }: { scene: SceneDef; len: number }) => {
             transformStyle: "preserve-3d",
             borderRadius: 18,
             overflow: "hidden",
-            boxShadow: "0 50px 140px rgba(0,0,0,0.7), 0 0 0 1px rgba(255,255,255,0.08), 0 0 80px rgba(99,102,241,0.25)",
-            background: "#0b1220",
+            boxShadow: `0 0 0 1px ${COLOR.border}, 0 0 80px rgba(95,224,138,0.16)`,
+            background: COLOR.surface,
           }}
         >
-          <div style={{ height: BAR_H, background: "#111a2c", display: "flex", alignItems: "center", gap: 9, padding: "0 16px" }}>
-            {["#ff5f57", "#febc2e", "#28c840"].map((c) => (
+          <div style={{ height: BAR_H, background: COLOR.surface, display: "flex", alignItems: "center", gap: 9, padding: "0 16px" }}>
+            {[COLOR.decor, COLOR.second, COLOR.accent].map((c) => (
               <div key={c} style={{ width: 13, height: 13, borderRadius: 7, background: c }} />
             ))}
             <div
@@ -493,8 +398,8 @@ const SceneView = ({ scene, len }: { scene: SceneDef; len: number }) => {
                 flex: 1,
                 height: 24,
                 borderRadius: 12,
-                background: "#0b1220",
-                color: "#7b8aa5",
+                background: COLOR.background,
+                color: COLOR.muted,
                 fontSize: 14,
                 display: "flex",
                 alignItems: "center",
@@ -521,7 +426,7 @@ const SceneView = ({ scene, len }: { scene: SceneDef; len: number }) => {
               ) : (
                 <Img src={staticFile(scene.image)} style={{ position: "absolute", left: 0, top: 0, width: IMG_W }} />
               )}
-              {scene.id === "dashboard" && <DashboardLive frame={frame} len={len} />}
+              {scene.id === "dashboard" && <DashboardLive frame={frame} />}
               {scene.id === "withdrawals" && <ApproveFlash frame={frame} at={Math.round(len * 0.55)} />}
             </div>
             {(scene.callouts ?? []).map((c, i) => (
@@ -535,90 +440,23 @@ const SceneView = ({ scene, len }: { scene: SceneDef; len: number }) => {
           position: "absolute",
           left: 0,
           right: 0,
-          bottom: 42,
+          bottom: 34,
           textAlign: "center",
-          color: "white",
           opacity: textIn * textOut,
           transform: `translateY(${(1 - textIn) * 28}px)`,
         }}
       >
-        <div style={{ fontSize: 52, fontWeight: 700, textShadow: "0 0 40px rgba(99,102,241,0.7)" }}>{scene.title}</div>
-        <div style={{ fontSize: 28, marginTop: 6, opacity: 0.8, fontWeight: 500 }}>{scene.caption}</div>
+        <div style={{ width: 44, height: 5, borderRadius: 3, margin: "0 auto 10px", background: COLOR.accent }} />
+        <div style={{ fontFamily: MONO, fontSize: 46, fontWeight: 700, color: COLOR.text }}>{scene.title}</div>
+        <div style={{ fontSize: 28, marginTop: 4, color: COLOR.muted }}>{scene.caption}</div>
       </div>
-    </AbsoluteFill>
-  );
-};
-
-// ---------------------------------------------------------------- intro and outro
-
-/** Title card: the words fly in one by one */
-const Intro = () => {
-  const frame = useFrame();
-  const fps = FPS;
-  const words = ["Bottle", "Game", "Admin", "Panel"];
-  const line = interpolate(frame, [30, 70], [0, 1], { extrapolateRight: "clamp", easing: ease });
-  const sub = interpolate(frame, [50, 80], [0, 1], { extrapolateRight: "clamp" });
-  const out = interpolate(frame, [INTRO - 12, INTRO], [1, 0], { extrapolateLeft: "clamp" });
-  return (
-    <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", fontFamily: FONT, color: "white", opacity: out }}>
-      <div style={{ display: "flex", gap: 28, fontSize: 130, fontWeight: 700 }}>
-        {words.map((w, i) => {
-          const s = Math.min(spring({ frame: frame - i * 7, fps, config: { damping: 14, stiffness: 120 } }), 1.2);
-          return (
-            <span
-              key={w}
-              style={{ display: "inline-block", opacity: Math.min(s, 1), transform: `translateY(${(1 - s) * 80}px) scale(${0.8 + 0.2 * s})` }}
-            >
-              {w}
-            </span>
-          );
-        })}
-      </div>
-      <div
-        style={{
-          width: 760 * line,
-          height: 5,
-          borderRadius: 3,
-          marginTop: 26,
-          background: "linear-gradient(90deg,#6366f1,#0ea5e9,#a855f7)",
-          boxShadow: "0 0 30px #6366f1",
-        }}
-      />
-      <div style={{ opacity: sub, marginTop: 34, fontSize: 40, fontWeight: 500 }}>Next.js 15 · React 19 · TypeScript · Tailwind CSS</div>
-      <div style={{ opacity: sub * 0.75, marginTop: 12, fontSize: 30 }}>Back office of a Telegram mini-app game</div>
-    </AbsoluteFill>
-  );
-};
-
-/** Closing card with the repository links */
-const Outro = () => {
-  const frame = useFrame();
-  const fps = FPS;
-  const a = spring({ frame, fps, config: { damping: 200 } });
-  const b = interpolate(frame, [25, 50], [0, 1], { extrapolateRight: "clamp" });
-  const glow = 0.5 + Math.sin(frame / 12) * 0.25;
-  return (
-    <AbsoluteFill style={{ alignItems: "center", justifyContent: "center", fontFamily: FONT, color: "white" }}>
-      <div
-        style={{
-          opacity: a,
-          transform: `translateY(${(1 - a) * 40}px)`,
-          fontSize: 84,
-          fontWeight: 700,
-          textShadow: `0 0 60px rgba(99,102,241,${glow})`,
-        }}
-      >
-        Runs against the API demo mode
-      </div>
-      <div style={{ opacity: b, marginTop: 26, fontSize: 38, fontWeight: 500 }}>docker compose up, then npm run dev</div>
-      <div style={{ marginTop: 56, fontSize: 34, opacity: b * 0.9 }}>github.com/Dgrabovets/BottleGameAdministrationPanel</div>
-      <div style={{ marginTop: 10, fontSize: 34, opacity: b * 0.9 }}>github.com/Dgrabovets/BottleGameAPI</div>
     </AbsoluteFill>
   );
 };
 
 /** The whole demo video: intro, one scene per page, outro */
 export const AdminDemo = () => {
+  useFonts();
   const parts: React.ReactNode[] = [];
   let start = INTRO;
   SCENES.forEach((scene, i) => {
@@ -630,14 +468,8 @@ export const AdminDemo = () => {
     );
     start += len;
   });
-  const fonts = `
-    @font-face { font-family: "Satoshi"; src: url("${staticFile("Satoshi-Medium.woff2")}") format("woff2"); font-weight: 500; }
-    @font-face { font-family: "Satoshi"; src: url("${staticFile("Satoshi-Bold.woff2")}") format("woff2"); font-weight: 700; }
-  `;
   return (
-    <AbsoluteFill>
-      <style>{fonts}</style>
-      <Backdrop />
+    <AbsoluteFill style={{ background: COLOR.background }}>
       <Sequence from={0} durationInFrames={INTRO * SCALE}>
         <Intro />
       </Sequence>

@@ -1,5 +1,6 @@
 import { Composition } from "remotion";
-import { AdminDemo, RENDER_FPS, TOTAL_FRAMES } from "./AdminDemo";
+import { AdminDemo, TOTAL_FRAMES } from "./AdminDemo";
+import { RENDER_FPS } from "./timing";
 
 /** Registers the demo video: 1920x1080 at 60 fps */
 export const Root = () => (
