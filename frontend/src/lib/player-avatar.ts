@@ -1,13 +1,8 @@
 /** Placeholder image shown when a player has no avatar */
 export const PLAYER_AVATAR_PLACEHOLDER = "/images/user/avatar-placeholder.svg";
 
-/** Host suffixes avatars may be loaded from */
-const ALLOWED_AVATAR_HOST_SUFFIXES = [
-  "t.me",
-  "telegram.org",
-  "telesco.pe",
-  "telegram-cdn.org",
-];
+/** Host suffixes an avatar may be fetched from, redirects to the Telegram CDN included */
+const ALLOWED_AVATAR_HOST_SUFFIXES = ["t.me", "telegram.org", "telesco.pe"];
 
 /** Normalizes an avatar URL, returns null when it is empty or not a valid URL */
 export function normalizeAvatarUrl(url?: string | null): string | null {
@@ -40,11 +35,32 @@ export function normalizeAvatarUrl(url?: string | null): string | null {
   }
 }
 
-/** Checks that the avatar host is on the allowed list */
-export function isAllowedAvatarHost(hostname: string): boolean {
-  const host = hostname.toLowerCase();
-  return ALLOWED_AVATAR_HOST_SUFFIXES.some(
-    (suffix) => host === suffix || host.endsWith(`.${suffix}`),
+/**
+ * Returns the address to fetch for an avatar link, rebuilt on a fixed origin so the link cannot choose the host.
+ * Returns null when the link points anywhere else
+ */
+export function getAvatarFetchUrl(link: URL): string | null {
+  // The literal host and slash come first, so a path such as //other.host stays a path
+  const path = `${link.pathname.slice(1)}${link.search}`;
+  switch (link.origin) {
+    case "https://t.me":
+      return `https://t.me/${path}`;
+    case "https://telegram.org":
+      return `https://telegram.org/${path}`;
+    default:
+      return null;
+  }
+}
+
+/** Checks a hop before it is fetched: HTTPS on the default port from an allowed host */
+export function isAllowedAvatarHop(url: URL): boolean {
+  const host = url.hostname.toLowerCase();
+  return (
+    url.protocol === "https:" &&
+    !url.port &&
+    ALLOWED_AVATAR_HOST_SUFFIXES.some(
+      (suffix) => host === suffix || host.endsWith(`.${suffix}`),
+    )
   );
 }
 
@@ -66,8 +82,7 @@ export function resolvePlayerAvatarSrc(url?: string | null): string {
   }
 
   try {
-    const parsed = new URL(normalized);
-    if (isAllowedAvatarHost(parsed.hostname)) {
+    if (getAvatarFetchUrl(new URL(normalized))) {
       return getProxiedAvatarUrl(normalized);
     }
   } catch {

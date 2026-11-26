@@ -66,7 +66,7 @@ The browser never receives the API token and never calls the API directly.
 - All data requests go through `/api/backend/[...path]`, a server-side proxy that adds the `Authorization` header, accepts only known API paths, applies the same origin check to requests that change data, refuses redirects and gives up after 15 seconds. In production it also refuses an API URL whose host is written as `localhost`, a `.local` name or a loopback or private IP address. It does not resolve DNS names, and the login route does not make this check.
 - `src/middleware.ts` redirects visitors without a valid session to `/login`, drops expired cookies and keeps the admin-only pages (`/`, `/settings`, `/moderators`) away from moderators. The middleware only checks expiry; the API validates the token signature on every request.
 - `next.config.mjs` sets security headers: a Content-Security-Policy, `X-Frame-Options: DENY`, `X-Content-Type-Options` and a strict `Referrer-Policy`.
-- Player avatars are fetched through `/api/avatar`, which allows only JPEG, PNG, GIF and WebP images (no SVG) from known hosts, stops a download over 2 MB or longer than 10 seconds and follows three redirects at most.
+- Player avatars are fetched through `/api/avatar`, which accepts only `https://t.me` and `https://telegram.org` links and rebuilds each address on that fixed origin. It follows three redirects at most, only over HTTPS to Telegram hosts, allows only JPEG, PNG, GIF and WebP images (no SVG) and stops a download over 2 MB or longer than 10 seconds.
 
 ## Getting started
 

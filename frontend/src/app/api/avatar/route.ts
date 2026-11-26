@@ -3,7 +3,11 @@ import {
   isSafeImageContentType,
   readAvatarBody,
 } from "@/lib/api-security";
-import { isAllowedAvatarHost, normalizeAvatarUrl } from "@/lib/player-avatar";
+import {
+  getAvatarFetchUrl,
+  isAllowedAvatarHop,
+  normalizeAvatarUrl,
+} from "@/lib/player-avatar";
 import { AUTH_COOKIE_NAME } from "@/lib/session";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
@@ -23,7 +27,7 @@ async function fetchAvatarWithRedirects(
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
     const parsed = new URL(currentUrl);
     if (
-      !isAllowedAvatarHost(parsed.hostname) ||
+      !isAllowedAvatarHop(parsed) ||
       isPrivateOrReservedHost(parsed.hostname)
     ) {
       return null;
@@ -77,15 +81,13 @@ export async function GET(request: NextRequest) {
     return new NextResponse(null, { status: 400 });
   }
 
-  if (
-    !isAllowedAvatarHost(parsed.hostname) ||
-    isPrivateOrReservedHost(parsed.hostname)
-  ) {
+  const fetchUrl = getAvatarFetchUrl(parsed);
+  if (!fetchUrl) {
     return new NextResponse(null, { status: 403 });
   }
 
   try {
-    const upstream = await fetchAvatarWithRedirects(normalized);
+    const upstream = await fetchAvatarWithRedirects(fetchUrl);
     if (!upstream || !upstream.ok) {
       return new NextResponse(null, { status: upstream?.status ?? 502 });
     }
