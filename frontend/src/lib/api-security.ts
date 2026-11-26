@@ -31,9 +31,10 @@ const PRIVATE_HOST_PATTERNS = [
   /^172\.(1[6-9]|2\d|3[0-1])\./,
   /^169\.254\./,
   /^0\./,
-  /^::1$/,
-  /^fc00:/i,
-  /^fe80:/i,
+  /^::1?$/,
+  /^::ffff:/i,
+  /^f[cd][0-9a-f]{2}:/i,
+  /^fe[89ab][0-9a-f]:/i,
 ];
 
 /** Image content types that are safe to serve */
@@ -43,7 +44,6 @@ const SAFE_IMAGE_CONTENT_TYPES = new Set([
   "image/png",
   "image/gif",
   "image/webp",
-  "image/svg+xml",
 ]);
 
 /** Largest avatar the proxy will download, in bytes */
@@ -51,8 +51,15 @@ const MAX_AVATAR_BYTES = 2 * 1024 * 1024;
 
 /** Checks whether a host name is a private or reserved address */
 export function isPrivateOrReservedHost(hostname: string): boolean {
-  const host = hostname.toLowerCase();
-  if (host === "0.0.0.0" || host.endsWith(".local")) return true;
+  // URL.hostname keeps the brackets of an IPv6 address and the trailing dot of a name
+  const host = hostname.toLowerCase().replace(/^\[|\]$|\.+$/g, "");
+  if (
+    host === "0.0.0.0" ||
+    host.endsWith(".local") ||
+    host.endsWith(".localhost")
+  ) {
+    return true;
+  }
   return PRIVATE_HOST_PATTERNS.some((pattern) => pattern.test(host));
 }
 
@@ -106,16 +113,34 @@ export function isSafeImageContentType(contentType: string | null): boolean {
   return SAFE_IMAGE_CONTENT_TYPES.has(primary);
 }
 
-/** Checks that the avatar does not exceed the size limit */
-export function isAvatarResponseWithinSize(
-  contentLength: string | null,
-  body: ArrayBuffer,
-): boolean {
-  if (body.byteLength > MAX_AVATAR_BYTES) return false;
-  if (!contentLength) return true;
-  const length = Number.parseInt(contentLength, 10);
-  if (Number.isNaN(length)) return true;
-  return length <= MAX_AVATAR_BYTES;
+/** Reads the avatar body, returns null and stops the download once it exceeds the size limit */
+export async function readAvatarBody(response: Response) {
+  if (Number(response.headers.get("content-length")) > MAX_AVATAR_BYTES) {
+    await response.body?.cancel();
+    return null;
+  }
+
+  const chunks: Uint8Array[] = [];
+  let size = 0;
+  const reader = response.body?.getReader();
+  while (reader) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    size += value.byteLength;
+    if (size > MAX_AVATAR_BYTES) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+
+  const body = new Uint8Array(size);
+  let offset = 0;
+  for (const chunk of chunks) {
+    body.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return body;
 }
 
 /** Normalizes a host name for comparison */
@@ -167,10 +192,31 @@ const loginAttempts = new Map<string, { count: number; resetAt: number }>();
 const LOGIN_RATE_LIMIT = 25;
 /** Length of the login rate limit window, in milliseconds */
 const LOGIN_RATE_WINDOW_MS = 60 * 1000;
+/** Largest number of clients the rate limit remembers */
+const LOGIN_RATE_MAX_CLIENTS = 10_000;
+
+/** Time of the next removal of expired rate limit entries */
+let nextPruneAt = 0;
+
+/** Removes expired entries once per window or when full, then the oldest one if there is still no room */
+function pruneLoginAttempts(now: number) {
+  if (now < nextPruneAt && loginAttempts.size < LOGIN_RATE_MAX_CLIENTS) return;
+  nextPruneAt = now + LOGIN_RATE_WINDOW_MS;
+
+  for (const [key, entry] of loginAttempts) {
+    if (entry.resetAt <= now) loginAttempts.delete(key);
+  }
+
+  // shortcut: a flood of made-up client keys pushes out real counters, move to a shared store with a trusted client address
+  if (loginAttempts.size >= LOGIN_RATE_MAX_CLIENTS) {
+    loginAttempts.delete(loginAttempts.keys().next().value!);
+  }
+}
 
 /** Counts a login attempt and tells whether it is within the limit */
 export function checkLoginRateLimit(key: string): boolean {
   const now = Date.now();
+  pruneLoginAttempts(now);
   const entry = loginAttempts.get(key);
 
   if (!entry || entry.resetAt <= now) {
