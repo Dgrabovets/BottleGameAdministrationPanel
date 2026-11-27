@@ -118,7 +118,6 @@ Requirements: Node.js 20 or newer and Docker for the API.
 
 - The login rate limit of the panel (25 attempts a minute per client, kept in memory) takes the client address from the first value of `X-Forwarded-For`, or from `X-Real-IP`. A client can forge these headers and get past the limit unless a reverse proxy in front of the panel overwrites them.
 - The panel does not forward the client address to the API, so the API's own sign-in limit counts all panel users as one client. One client that keeps trying can keep sign-in blocked for everyone.
-- The referrals table of a player profile shows a win rate of 0%, because the API does not load the rounds of invited players.
 
 ## Project layout
 
