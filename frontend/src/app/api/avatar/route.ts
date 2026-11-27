@@ -8,7 +8,7 @@ import {
   isAllowedAvatarHop,
   normalizeAvatarUrl,
 } from "@/lib/player-avatar";
-import { AUTH_COOKIE_NAME } from "@/lib/session";
+import { AUTH_COOKIE_NAME, getBackendApiUrl } from "@/lib/session";
 import { cookies } from "next/headers";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -16,6 +16,22 @@ import { NextRequest, NextResponse } from "next/server";
 const MAX_REDIRECTS = 3;
 /** Time allowed for all hops and the download of an avatar, in milliseconds */
 const AVATAR_TIMEOUT_MS = 10_000;
+/** Time allowed for the API to answer the token check, in milliseconds */
+const TOKEN_CHECK_TIMEOUT_MS = 5_000;
+
+/**
+ * Asks the API whether the token belongs to a staff member, because the panel does not hold the signing key.
+ * The endpoint is a small list that administrators and moderators may read
+ */
+function checkStaffToken(token: string): Promise<Response> {
+  // shortcut: one API call for every avatar the browser has not cached, remember accepted tokens if that loads the API
+  return fetch(`${getBackendApiUrl()}/Balance/get-all-transaction-statuses`, {
+    headers: { Authorization: `Bearer ${token}` },
+    cache: "no-store",
+    redirect: "error",
+    signal: AbortSignal.timeout(TOKEN_CHECK_TIMEOUT_MS),
+  });
+}
 
 /** Fetches an avatar and follows redirects manually, checking every hop against the host rules */
 async function fetchAvatarWithRedirects(
@@ -87,6 +103,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    const tokenCheck = await checkStaffToken(token);
+    await tokenCheck.body?.cancel();
+    if (!tokenCheck.ok) {
+      return new NextResponse(null, { status: tokenCheck.status });
+    }
+
     const upstream = await fetchAvatarWithRedirects(fetchUrl);
     if (!upstream || !upstream.ok) {
       return new NextResponse(null, { status: upstream?.status ?? 502 });
