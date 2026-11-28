@@ -1,4 +1,7 @@
-<img src="docs/header.svg" alt="Bottle Game Administration Panel" width="100%">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/header.svg">
+  <img src="docs/header-light.svg" alt="Bottle Game Administration Panel" width="100%">
+</picture>
 
 <div align="center">
 
@@ -9,10 +12,10 @@
 [![CI](https://github.com/Dgrabovets/BottleGameAdministrationPanel/actions/workflows/ci.yml/badge.svg)](https://github.com/Dgrabovets/BottleGameAdministrationPanel/actions/workflows/ci.yml)
 [![Dependency audit](https://github.com/Dgrabovets/BottleGameAdministrationPanel/actions/workflows/security.yml/badge.svg)](https://github.com/Dgrabovets/BottleGameAdministrationPanel/actions/workflows/security.yml)
 [![CodeQL](https://github.com/Dgrabovets/BottleGameAdministrationPanel/actions/workflows/codeql.yml/badge.svg)](https://github.com/Dgrabovets/BottleGameAdministrationPanel/actions/workflows/codeql.yml)
-![Next.js](https://img.shields.io/badge/Next.js-15-000000?logo=nextdotjs&logoColor=white)
-![React](https://img.shields.io/badge/React-19-61DAFB?logo=react&logoColor=black)
-![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?logo=typescript&logoColor=white)
-![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-06B6D4?logo=tailwindcss&logoColor=white)
+![Next.js](https://img.shields.io/badge/Next.js-15-4a5260?logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React-19-4a5260?logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-4a5260?logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-4a5260?logo=tailwindcss&logoColor=white)
 
 https://github.com/user-attachments/assets/5da4cb37-b088-4421-a7e6-7d4f59bb0e52
 
@@ -56,9 +59,12 @@ Demo data from a local Bottle Game API.
 
 ## How it talks to the API
 
-<img src="docs/diagrams/admin-request-path.png" alt="Admin request path. Sign in: the browser posts the login and password to /api/auth/login, the Next.js server forwards them to the API and stores the returned JWT in an httpOnly cookie. Data: each request goes with that cookie through the middleware and the /api/backend proxy, which adds the Bearer token and calls the API; the API checks the token and the role and reads PostgreSQL" width="100%">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="docs/diagrams/admin-request-path.png">
+  <img src="docs/diagrams/admin-request-path-light.png" alt="Admin request path. Sign in: the browser posts the login and password to /api/auth/login, the Next.js server forwards them to the API and stores the returned JWT in an httpOnly cookie. Data: each request goes with that cookie through the middleware and the /api/backend proxy, which adds the Bearer token and calls the API; the API checks the token and the role and reads PostgreSQL" width="100%">
+</picture>
 
-The source of the diagram is `docs/diagrams/admin-request-path.svg`; `node docs/diagrams/render.mjs <fonts folder>` renders the PNG. The script runs on Windows with Microsoft Edge in its default folder, and the fonts folder must contain `JetBrainsMono[wght].ttf` and `IBMPlexSans[wdth,wght].ttf` (the variable files of [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono) and [IBM Plex Sans](https://fonts.google.com/specimen/IBM+Plex+Sans)).
+The sources of the diagram are `docs/diagrams/admin-request-path.svg` and `admin-request-path-light.svg`; `node docs/diagrams/render.mjs <fonts folder>` renders both PNGs. The script runs on Windows with Microsoft Edge in its default folder, and the fonts folder must contain `JetBrainsMono[wght].ttf` and `IBMPlexSans[wdth,wght].ttf` (the variable files of [JetBrains Mono](https://fonts.google.com/specimen/JetBrains+Mono) and [IBM Plex Sans](https://fonts.google.com/specimen/IBM+Plex+Sans)).
 
 The browser never receives the API token and never calls the API directly.
 

@@ -4,13 +4,14 @@ import { cancelRender, continueRender, delayRender, staticFile } from "remotion"
 /** Colours of the dark brand theme */
 export const COLOR = {
   background: "#000000",
-  surface: "#03100a",
-  border: "#232a25",
-  text: "#f3f2ee",
-  muted: "#a4a69f",
-  accent: "#5fe08a",
-  second: "#2fd4c0",
-  decor: "#1c6b47",
+  surface: "#1b1e24",
+  border: "#646d7c",
+  text: "#ffffff",
+  muted: "#d1d7e0",
+  accent: "#e8ecf2",
+  columns: "#7b8494",
+  second: "#aab3c0",
+  decor: "#2a2f38",
 };
 
 /** Brand font for titles and the role line */
