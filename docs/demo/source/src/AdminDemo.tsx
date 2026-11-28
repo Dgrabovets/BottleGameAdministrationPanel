@@ -384,7 +384,7 @@ const SceneView = ({ scene, len }: { scene: SceneDef; len: number }) => {
             transformStyle: "preserve-3d",
             borderRadius: 18,
             overflow: "hidden",
-            boxShadow: `0 0 0 1px ${COLOR.border}, 0 0 80px rgba(95,224,138,0.16)`,
+            boxShadow: `0 0 0 1px ${COLOR.border}, 0 0 80px rgba(232,236,242,0.14)`,
             background: COLOR.surface,
           }}
         >

@@ -23,7 +23,7 @@ export const LightColumns = () => {
     const y = -30 + (Math.floor(random() * 4) * HEIGHT) / 3.8 + random() * 12;
     const height = (50 + random() * 70) * BAR_HEIGHT_SCALE;
     const count = 4 + Math.floor(random() * 9);
-    const color = [COLOR.decor, COLOR.accent, COLOR.accent, COLOR.second][Math.floor(random() * 4)];
+    const color = [COLOR.decor, COLOR.columns, COLOR.columns, COLOR.second][Math.floor(random() * 4)];
     const opacity = 0.3 + ((x - FROM) / (TO - FROM)) * 0.6;
     for (let i = 0; i < count; i++) {
       bars.push(
@@ -42,7 +42,7 @@ export const LightColumns = () => {
   return (
     <svg width={1920} height={HEIGHT} style={{ position: "absolute", left: 0, top: 0 }}>
       <defs>
-        {[COLOR.decor, COLOR.accent, COLOR.second].map((color) => (
+        {[COLOR.decor, COLOR.columns, COLOR.second].map((color) => (
           <linearGradient key={color} id={`column-${color.slice(1)}`} x1="0" y1="0" x2="0" y2="1">
             <stop offset="0" stopColor={color} stopOpacity="0" />
             <stop offset="0.75" stopColor={color} />
