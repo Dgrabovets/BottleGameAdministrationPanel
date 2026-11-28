@@ -17,7 +17,7 @@
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-4a5260?logo=typescript&logoColor=white)
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-3-4a5260?logo=tailwindcss&logoColor=white)
 
-https://github.com/user-attachments/assets/5da4cb37-b088-4421-a7e6-7d4f59bb0e52
+https://github.com/user-attachments/assets/148bd9ce-f4e7-47cd-92a2-aec549532ca7
 
 </div>
 
